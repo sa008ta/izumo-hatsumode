@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>出雲大社 初詣</title>
+<meta property="og:title" content="出雲大社 初詣">
+<meta property="og:description" content="神門通りから人混みをかき分けて出雲大社へ。無礼をせずに参拝できるか？">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://sa008ta.github.io/izumo-hatsumode/">
+<meta property="og:image" content="https://sa008ta.github.io/izumo-hatsumode/cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { width:100%; height:100%; overflow:hidden; background:#1a2030; font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif; touch-action:none; overscroll-behavior:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+  #gl { position:fixed; inset:0; }
+  #gl canvas { width:100%; height:100%; display:block; }
+  .pill { background:rgba(20,24,38,.78); color:#fff; border-radius:999px; padding:6px 14px; font-size:15px; font-weight:700; letter-spacing:.03em; box-shadow:0 2px 8px rgba(0,0,0,.35); }
+  #hud { position:fixed; top:calc(env(safe-area-inset-top,0px) + 10px); left:0; right:0; display:none; justify-content:space-between; align-items:flex-start; padding:0 10px; pointer-events:none; z-index:5; }
+  #hud .col { display:flex; flex-direction:column; gap:6px; align-items:flex-start; }
+  #hud .col.r { align-items:flex-end; }
+
+  #zonePill { align-self:center; background:rgba(90,60,20,.8); }
+  #quitBtn { pointer-events:auto; background:rgba(20,24,38,.6); color:#fff; border:1px solid rgba(255,255,255,.4); border-radius:999px; padding:5px 12px; font-size:13px; font-weight:700; }
+  #popups { position:fixed; top:22%; left:0; right:0; display:flex; flex-direction:column; align-items:center; gap:4px; pointer-events:none; z-index:6; }
+  #flash { position:fixed; inset:0; background:#fffbe8; opacity:0; pointer-events:none; z-index:35; }
+  .pop { color:#fff; font-size:21px; font-weight:900; text-shadow:0 2px 6px rgba(0,0,0,.7),0 0 2px #000; animation:popfloat 1.15s ease-out forwards; }
+  .pop.warn { color:#ffd94d; font-size:24px; }
+  .pop.bad { color:#ff7b6b; }
+  @keyframes popfloat { 0%{opacity:0; transform:translateY(10px) scale(.8);} 15%{opacity:1; transform:translateY(0) scale(1.08);} 30%{transform:scale(1);} 75%{opacity:1;} 100%{opacity:0; transform:translateY(-26px);} }
+  #startPop { position:fixed; top:34%; left:0; right:0; text-align:center; font-size:52px; font-weight:900; color:#7be382; text-shadow:0 3px 0 #1d5c2a,0 6px 18px rgba(0,0,0,.6); display:none; z-index:7; pointer-events:none; animation:popfloat 1.2s ease-out forwards; }
+  #stickL { position:fixed; width:118px; height:118px; border-radius:50%; border:2px solid rgba(255,255,255,.5); background:rgba(255,255,255,.10); display:none; z-index:5; pointer-events:none; }
+  #stickL .nub { position:absolute; width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,.55); left:33px; top:33px; }
+  .scr { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; background:rgba(12,14,24,.55); z-index:10; padding:20px; overflow-y:auto; }
+  .scr h1 { color:#fff; font-size:37px; font-weight:900; text-align:center; text-shadow:0 3px 12px rgba(0,0,0,.8); line-height:1.25; }
+  .scr h1 .sub { display:block; font-size:16px; font-weight:700; color:#ffd94d; margin-top:6px; }
+  .card { background:rgba(255,255,255,.94); border-radius:16px; padding:16px 18px; width:min(92vw,430px); box-shadow:0 8px 30px rgba(0,0,0,.45); }
+  .card p { font-size:14px; line-height:1.65; color:#333; }
+  .card p.rite { font-size:16px; font-weight:600; text-align:center; letter-spacing:.1em; color:#555; margin:0; }
+  .card.riteCard { padding:10px 18px; }
+  .btn { display:block; width:min(92vw,430px); padding:15px; border:none; border-radius:999px; font-size:19px; font-weight:900; color:#fff; background:linear-gradient(180deg,#e2543e,#b93325); box-shadow:0 5px 0 #7e1f16,0 8px 18px rgba(0,0,0,.4); cursor:pointer; text-align:center; text-decoration:none; }
+  .btn:active { transform:translateY(3px); box-shadow:0 2px 0 #7e1f16; }
+  .btn.sub { background:linear-gradient(180deg,#5a6c8c,#3c4c68); box-shadow:0 5px 0 #27334a,0 8px 18px rgba(0,0,0,.4); font-size:16px; padding:12px; }
+  .btn.sub:active { box-shadow:0 2px 0 #27334a; }
+  #nameInput { width:100%; padding:11px 13px; font-size:17px; font-weight:700; border:2px solid #bbb; border-radius:10px; outline:none; }
+  #nameInput:focus { border-color:#b93325; }
+  .bestLine { color:#ffe9a8; font-size:15px; font-weight:700; text-shadow:0 1px 4px rgba(0,0,0,.8); text-align:center; }
+  #prayUI { position:fixed; left:0; right:0; bottom:calc(env(safe-area-inset-bottom,0px) + 14px); display:none; flex-direction:column; align-items:center; gap:12px; z-index:8; }
+  #praySeq { display:flex; gap:6px; }
+  #praySeq .slot { width:40px; height:40px; border-radius:10px; background:rgba(20,24,38,.75); color:rgba(255,255,255,.45); display:flex; align-items:center; justify-content:center; font-size:19px; font-weight:900; border:2px solid rgba(255,255,255,.25); }
+  #praySeq .slot.done { background:#2e9e4f; color:#fff; border-color:#7be382; }
+  #praySeq .slot.now { border-color:#ffd94d; color:#ffd94d; }
+  #praySeq.shake { animation:shk .3s; }
+  @keyframes shk { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-8px);} 75%{transform:translateX(8px);} }
+  #prayBtns { display:flex; gap:14px; }
+  .prayBtn { width:128px; height:72px; border-radius:18px; border:none; font-size:26px; font-weight:900; color:#fff; cursor:pointer; box-shadow:0 5px 0 rgba(0,0,0,.35); }
+  .prayBtn:active { transform:translateY(3px); box-shadow:0 2px 0 rgba(0,0,0,.35); }
+  #bowBtn { background:linear-gradient(180deg,#3f7fbf,#2a5a8f); }
+  #clapBtn { background:linear-gradient(180deg,#e8a33d,#c47b1d); }
+  #resultScr { display:none; }
+  #omikuji { font-size:64px; font-weight:900; color:#b93325; text-align:center; line-height:1.1; }
+  #resTitle { font-size:21px; font-weight:900; text-align:center; color:#222; }
+  #resComment { font-size:14px; text-align:center; color:#222; }
+  .resRows { font-size:16px; line-height:2; color:#222; font-weight:700; }
+  .resRows span { float:right; font-weight:900; }
+  #rankScr { display:none; }
+  #rankList { font-size:15px; line-height:1.9; color:#222; font-weight:600; max-height:46vh; overflow-y:auto; }
+  #rankList .me { color:#b93325; font-weight:900; }
+  #danger { position:fixed; inset:0; pointer-events:none; z-index:4; box-shadow:inset 0 0 90px 30px rgba(255,40,20,.55); opacity:0; transition:opacity .18s; }
+  #punchBtn { position:fixed; right:18px; bottom:calc(env(safe-area-inset-bottom,0px) + 26px); width:92px; height:92px; border-radius:50%; border:3px solid rgba(255,255,255,.65); background:radial-gradient(circle at 35% 30%, #e88a3d, #b95c14); color:#fff; font-size:23px; font-weight:900; display:none; z-index:8; box-shadow:0 6px 16px rgba(0,0,0,.45); cursor:pointer; }
+  #punchBtn:active { transform:scale(.93); }
+  #dashBtn { position:fixed; right:122px; bottom:calc(env(safe-area-inset-bottom,0px) + 34px); width:76px; height:76px; border-radius:50%; border:3px solid rgba(255,255,255,.65); background:radial-gradient(circle at 35% 30%, #4da3e8, #1d5f9e); color:#fff; font-size:16px; font-weight:900; display:none; z-index:8; box-shadow:0 6px 16px rgba(0,0,0,.45); cursor:pointer; }
+  #dashBtn.on { background:radial-gradient(circle at 35% 30%, #8ec9ff, #2a7ac2); transform:scale(.93); }
+</style>
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }</script>
+</head>
+<body>
+<div id="gl"></div>
+<div id="danger"></div>
+<div id="hud">
+  <div class="col"><div class="pill" id="zonePill">神門通り</div><div class="pill" id="timePill">0.0秒</div></div>
+  <div class="col r"><button id="quitBtn">やめる</button></div>
+</div>
+<div id="popups"></div>
+<div id="flash"></div>
+<div id="startPop">スタート！</div>
+<div id="stickL"><div class="nub"></div></div>
+<button id="punchBtn">殴る</button>
+<button id="dashBtn">ダッシュ</button>
+<div id="prayUI">
+  <div id="prayBtns"><button class="prayBtn" id="bowBtn">礼</button><button class="prayBtn" id="clapBtn">拍手</button></div>
+</div>
+
+<div class="scr" id="titleScr">
+  <h1>⛩️ 出雲大社<span style="display:block;font-size:27px;">初詣</span></h1>
+  <div class="card riteCard">
+    <p class="rite">二礼四拍手一礼</p>
+  </div>
+  <input id="nameInput" type="text" maxlength="10" placeholder="名前（ランキング用）">
+  <button class="btn" id="startBtn">参拝スタート</button>
+  <button class="btn sub" id="rankBtn">🏆 ランキング</button>
+  <div class="bestLine" id="bestLine"></div>
+</div>
+
+<div class="scr" id="resultScr">
+  <div class="card">
+    <div id="omikuji">大吉</div>
+    <div id="resTitle"></div>
+    <div id="resComment"></div>
+    <div class="resRows">
+      <div>タイム <span id="resTime"></span></div>
+      <div>ぶつかった <span id="resBumps"></span></div>
+      <div>殴った <span id="resPunch"></span></div>
+      <div>鳥居を殴った <span id="resTorii"></span></div>
+      <div>参道の中央 <span id="resCenter"></span></div>
+      <div>作法 <span id="resPray"></span></div>
+    </div>
+  </div>
+  <button class="btn" id="imgShareBtn" style="background:linear-gradient(180deg,#3f9e58,#2a7a42);box-shadow:0 5px 0 #1d5c2a,0 8px 18px rgba(0,0,0,.4);">📷 画像付きで共有</button>
+  <a class="btn sub" id="shareBtn" href="#" target="_blank" rel="noopener">𝕏で共有</a>
+  <button class="btn sub" id="againBtn">もう一度</button>
+  <button class="btn sub" id="toTitleBtn">タイトルへ</button>
+</div>
+
+<div class="scr" id="rankScr">
+  <div class="card">
+    <div style="font-size:19px;font-weight:900;text-align:center;margin-bottom:6px;">🏆 ランキング</div>
+    <div id="rankList">読み込み中…</div>
+  </div>
+  <button class="btn sub" id="rankBackBtn">もどる</button>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+
+/* ================= 基本 ================= */
+const $ = id => document.getElementById(id);
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp = (a,b,t)=>a+(b-a)*t;
+const rnd = (a,b)=>a+Math.random()*(b-a);
+
+const renderer = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth, innerHeight);
+$('gl').appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xbfd6e8);
+scene.fog = new THREE.Fog(0xbfd6e8, 55, 150);
+const camera = new THREE.PerspectiveCamera(58, innerWidth/innerHeight, 0.1, 400);
+const amb = new THREE.AmbientLight(0xffffff, 0.75);
+scene.add(amb);
+const sun = new THREE.DirectionalLight(0xfff2d8, 1.5);
+sun.position.set(30, 50, 20);
+scene.add(sun);
+// 空の色（16:00→19:00で夕焼け→夜へ。G参照は呼び出し時のみ）
+const SKY_STOPS = [
+  { m: 960,  bg: new THREE.Color(0xbfd6e8), sun: new THREE.Color(0xfff2d8), si: 1.5,  ai: 0.75 },
+  { m: 1080, bg: new THREE.Color(0xf2b879), sun: new THREE.Color(0xff9448), si: 1.05, ai: 0.55 },
+  { m: 1120, bg: new THREE.Color(0x5a5f8a), sun: new THREE.Color(0xb06a8c), si: 0.5,  ai: 0.38 },
+  { m: 1140, bg: new THREE.Color(0x232a44), sun: new THREE.Color(0x7a86b8), si: 0.3,  ai: 0.30 },
+];
+function applySky(){
+  const m = G.clockMin;
+  let a = SKY_STOPS[0], b = SKY_STOPS[0];
+  if (m >= SKY_STOPS[SKY_STOPS.length - 1].m){ a = b = SKY_STOPS[SKY_STOPS.length - 1]; }
+  else for (let i = 0; i < SKY_STOPS.length - 1; i++){ if (m >= SKY_STOPS[i].m && m <= SKY_STOPS[i + 1].m){ a = SKY_STOPS[i]; b = SKY_STOPS[i + 1]; break; } }
+  const k = a === b ? 0 : (m - a.m) / (b.m - a.m);
+  scene.background.lerpColors(a.bg, b.bg, k);
+  scene.fog.color.copy(scene.background);
+  sun.color.lerpColors(a.sun, b.sun, k);
+  sun.intensity = a.si + (b.si - a.si) * k;
+  amb.intensity = a.ai + (b.ai - a.ai) * k;
+}
+addEventListener('resize', ()=>{ camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+
+const matCache = {};
+function M(color){ if(!matCache[color]) matCache[color] = new THREE.MeshLambertMaterial({ color }); return matCache[color]; }
+function box(parent, w,h,d, color, x,y,z, ry=0){
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), M(color));
+  m.position.set(x,y,z); m.rotation.y = ry; parent.add(m); return m;
+}
+function cyl(parent, rt,rb,h, color, x,y,z, seg=10){
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg), M(color));
+  m.position.set(x,y,z); parent.add(m); return m;
+}
+function sph(parent, r, color, x,y,z, sx=1,sy=1,sz=1){
+  const m = new THREE.Mesh(new THREE.SphereGeometry(r,12,10), M(color));
+  m.position.set(x,y,z); m.scale.set(sx,sy,sz); parent.add(m); return m;
+}
+function signTex(lines, bg, fg, w=256, h=128){
+  const c = document.createElement('canvas'); c.width=w; c.height=h;
+  const g = c.getContext('2d');
+  g.fillStyle = bg; g.fillRect(0,0,w,h);
+  g.strokeStyle = fg; g.lineWidth = 6; g.strokeRect(6,6,w-12,h-12);
+  g.fillStyle = fg; g.textAlign='center'; g.textBaseline='middle';
+  const fs = lines.length>1 ? h*0.34 : h*0.5;
+  g.font = '900 ' + fs + 'px sans-serif';
+  lines.forEach((t,i)=> g.fillText(t, w/2, h*(lines.length>1 ? (0.3+i*0.4) : 0.52)));
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+}
+function signBoard(parent, lines, bg, fg, w, h, x,y,z, ry=0){
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshLambertMaterial({ map: signTex(lines,bg,fg) }));
+  m.position.set(x,y,z); m.rotation.y = ry; parent.add(m); return m;
+}
+
+/* ================= 地形 ================= */
+// 神門通りは上り坂（後半きつい）、勢溜から先は下り参道、境内は平坦
+function groundY(z){
+  if (z >= 0) return 0;
+  if (z > -170) return lerp(0, 3.0, -z/170);
+  if (z > -340) return lerp(3.0, 8.5, (-z-170)/170);
+  if (z > -385) return lerp(8.5, 6.0, (-z-340)/45);
+  return 6.0;
+}
+function widthAt(z){ // プレイヤーの可動幅（半分）
+  if (z > -338) return 5.4;        // 神門通り
+  if (z > -378) return 6.4;        // 勢溜〜祓橋
+  if (z > -546) return 9.0;        // 松の参道〜銅鳥居（中央が通れない分、道幅を広く）
+  return 13;                        // 拝殿前広場
+}
+function buildGround(){
+  const g = new THREE.Group(); scene.add(g);
+  // 大地リボン
+  const pts = [];
+  for (let z = 16; z >= -606; z -= 4) pts.push(z);
+  const geo = new THREE.BufferGeometry();
+  const verts = [], cols = [], idx = [];
+  const cStreet = new THREE.Color(0x8a8578), cShrine = new THREE.Color(0xb8ab90), cTmp = new THREE.Color();
+  pts.forEach((z,i)=>{
+    const y = groundY(z);
+    verts.push(-46, y-0.05, z, 46, y-0.05, z);
+    cTmp.copy(z > -340 ? cStreet : cShrine);
+    cols.push(cTmp.r,cTmp.g,cTmp.b, cTmp.r,cTmp.g,cTmp.b);
+    if (i>0){ const a=(i-1)*2; idx.push(a,a+1,a+2, a+1,a+3,a+2); }
+  });
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(verts,3));
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(cols,3));
+  geo.setIndex(idx); geo.computeVertexNormals();
+  g.add(new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ vertexColors:true })));
+  // 神門通りの道（石畳：車道も歩道も明るい石舗装）
+  strip(g, -4.6, 4.6, 14, -340, 0x9c988f, 0.03);
+  strip(g, -6.6, -4.6, 14, -340, 0xa8a49a, 0.025);
+  strip(g,  4.6,  6.6, 14, -340, 0xa8a49a, 0.025);
+  // 車道の両端の白線（坂に沿わせる）
+  strip(g, -4.5, -4.28, 14, -338, 0xeeece6, 0.042);
+  strip(g,  4.28,  4.5, 14, -338, 0xeeece6, 0.042);
+  // 石畳の目地（横線）
+  for (let z = 6; z >= -336; z -= 8){
+    const seg = box(g, 9.2, 0.012, 0.18, 0x8b887f, 0, (groundY(z) + groundY(z-0.2))/2 + 0.036, z);
+    seg.rotation.x = Math.atan2(groundY(z-3.4) - groundY(z), 3.4);
+  }
+  // 勢溜の広場
+  strip(g, -9, 9, -336, -352, 0xa79b82, 0.03);
+  // 鳥居の前を横切る道路（東西）
+  strip(g, -46, 46, -330.5, -340, 0x4c4d52, 0.045);
+  for (let x = -44; x <= 44; x += 7){ // 横断道路のセンターライン
+    box(g, 3.4, 0.03, 0.28, 0xe8e4da, x, groundY(-335.2) + 0.06, -335.2);
+  }
+  for (let x = -2.75; x <= 2.75; x += 1.1){ // 横断歩道
+    strip(g, x, x + 0.55, -331.2, -339.3, 0xf2f0ea, 0.058);
+  }
+  // スクランブル交差点：通りを横切る横断歩道（南北）＋斜め横断
+  for (let x = -5.8; x <= 5.8; x += 1.1){
+    strip(g, x, x + 0.55, -329.7, -327.3, 0xf2f0ea, 0.05);
+    strip(g, x, x + 0.55, -343.3, -340.9, 0xf2f0ea, 0.05);
+  }
+  for (const sgn of [1, -1]){
+    for (let i = 0; i < 7; i++){
+      const t = 0.1 + i * 0.135;
+      const cx = sgn * lerp(-6.0, 6.0, t), cz = lerp(-331.2, -339.3, t);
+      const d = box(g, 0.55, 0.03, 2.1, 0xf2f0ea, cx, groundY(cz) + 0.06, cz);
+      d.rotation.y = Math.atan2(sgn * 12, -8.1);
+    }
+  }
+  // 下り参道〜松の参道（砂利）
+  strip(g, -9.4, 9.4, -352, -550, 0xc2b498, 0.03);
+  // 参道の中央＝神様の道（少し明るい石畳調で区別）
+  strip(g, -1.35, 1.35, -390, -546, 0xd9c9a4, 0.05);
+  strip(g, -1.35, 1.35, -546, -563, 0xd9c9a4, 0.05); // 拝殿前も神様の通り道（賽銭箱の前は入っていいので線は引かない）
+  strip(g, -1.35, 1.35, -352, -390, 0xcbbd9c, 0.04);
+  // 拝殿前広場
+  strip(g, -17, 17, -546, -572, 0xc2b498, 0.03);
+  // 祓橋の下の水
+  const wtr = new THREE.Mesh(new THREE.PlaneGeometry(15, 3.4), M(0x4d7fa8));
+  wtr.rotation.x = -Math.PI/2; wtr.position.set(0, groundY(-370)-0.12, -370); g.add(wtr);
+}
+function strip(parent, x0, x1, z0, z1, color, lift){
+  const pts = [];
+  for (let z = z0; z >= z1; z -= 4) pts.push(z);
+  if (pts[pts.length-1] !== z1) pts.push(z1);
+  const geo = new THREE.BufferGeometry();
+  const verts = [], idx = [];
+  pts.forEach((z,i)=>{
+    verts.push(x0, groundY(z)+lift, z, x1, groundY(z)+lift, z);
+    if (i>0){ const a=(i-1)*2; idx.push(a,a+1,a+2, a+1,a+3,a+2); }
+  });
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(verts,3));
+  geo.setIndex(idx); geo.computeVertexNormals();
+  parent.add(new THREE.Mesh(geo, M(color)));
+}
+function gableRoof(parent, w, d, baseY, rise, color, x=0, z=0){
+  const geo = new THREE.CylinderGeometry(1, 1, 1, 3, 1);
+  geo.rotateX(-Math.PI/2); geo.rotateY(Math.PI/2);
+  geo.scale(w, rise/1.5, d/1.732);
+  const m = new THREE.Mesh(geo, M(color));
+  m.position.set(x, baseY + rise/3, z);
+  parent.add(m); return m;
+}
+buildGround();
+
+/* ================= 鳥居 ================= */
+const TORIIS = [];
+function torii(x, z, w, h, color, pillarR){
+  const g = new THREE.Group(); const y = groundY(z);
+  g.position.set(x, y, z); scene.add(g);
+  const p1 = cyl(g, pillarR*0.85, pillarR, h, color, -w/2, h/2, 0, 12);
+  const p2 = cyl(g, pillarR*0.85, pillarR, h, color,  w/2, h/2, 0, 12);
+  p1.rotation.z = 0.03; p2.rotation.z = -0.03;
+  const top = box(g, w*2+1.6, h*0.09, pillarR*2.2, color, 0, h + h*0.05, 0);
+  top.rotation.z = 0; // 笠木
+  const shimaki = box(g, w*1.7, h*0.07, pillarR*1.9, color, 0, h - h*0.02, 0);
+  box(g, w*1.25, h*0.07, pillarR*1.5, color, 0, h*0.78, 0); // 貫
+  box(g, pillarR*1.1, h*0.22, pillarR*1.1, color, 0, h*0.9, 0); // 額束
+  TORIIS.push({ grp: g, z, w, shakeT: 0, metal: z !== 0 });
+  return g;
+}
+function updateToriis(dt){
+  for (const t of TORIIS){
+    if (t.shakeT > 0){
+      t.shakeT -= dt;
+      t.grp.rotation.z = Math.sin(t.shakeT * 26) * 0.05 * Math.max(0, t.shakeT);
+      if (t.shakeT <= 0) t.grp.rotation.z = 0;
+    }
+  }
+}
+torii(0, 0,     5.2, 7.2, 0x8a6844, 0.42);  // 一の鳥居（宇迦橋・木）
+torii(0, -343,  6.0, 8.6, 0x707880, 0.5);   // 二の鳥居（勢溜・鋼）
+torii(0, -392,  4.4, 5.6, 0x2e2a26, 0.34);  // 三の鳥居（鉄）
+torii(0, -546,  4.8, 6.0, 0x4f7a68, 0.38);  // 四の鳥居（銅）
+
+/* ================= 神門通りの店 ================= */
+function shop(x, z, face, name, sub, wallC, roofC, signBg, signFg, w=9, h=5.2, d=7){
+  const g = new THREE.Group(); g.position.set(x, groundY(z), z); g.rotation.y = face; scene.add(g);
+  box(g, w, h, d, wallC, 0, h/2, 0);
+  gableRoof(g, w+1.4, d+1.6, h-0.15, 1.7, roofC);
+  // 店先（正面は -z 側を道に向ける）
+  box(g, w*0.8, h*0.52, 0.15, 0x3a2e22, 0, h*0.28, -d/2-0.06); // ショーウィンドウ
+  box(g, w*0.5, 0.9, 0.1, 0x27435f, -w*0.18, h*0.62, -d/2-0.1); // のれん
+  signBoard(g, sub ? [name, sub] : [name], signBg, signFg, w*0.62, 1.15, 0, h-0.75, -d/2-0.14, Math.PI);
+  return g;
+}
+const SHOPS_E = [ // 東側（右手）
+  ['出雲そば','田中屋','#f5efe0','#7a2020'], ['ぜんざい','坂根屋','#7a2020','#ffffff'],
+  ['おみやげ','福乃和','#27435f','#ffffff'], ['出雲そば','八雲','#f5efe0','#27435f'],
+  ['まんじゅう','清水羊羹','#3c5a3a','#ffffff'], ['カフェ','珈琲館','#2e2a26','#f5efe0'],
+  ['おみやげ','彩雲堂','#6b3a5e','#ffffff'], ['そば処','羽根屋','#f5efe0','#7a2020'],
+];
+const SHOPS_W = [ // 西側（左手）
+  ['ぜんざい','ほんまち','#7a2020','#ffffff'], ['民芸品','出雲民藝','#27435f','#ffffff'],
+  ['薬局','堀江薬局','#f5efe0','#2e6e2e'], ['おみやげ','神門通り店','#8a6844','#ffffff'],
+  ['出雲そば','荒木屋','#f5efe0','#7a2020'], ['あめ細工','飴ん坊','#a03a5e','#ffffff'],
+  ['観光案内','いずも','#3c7a8c','#ffffff'], ['ぜんざい','日本ぜんざい学会','#7a2020','#ffffff'],
+];
+const SHOPS = [];
+for (let i=0; i<8; i++){
+  const z = -24 - i*38;
+  const se = SHOPS_E[i], sw = SHOPS_W[i];
+  const ge = shop( 10.8, z,  Math.PI/2, se[0], se[1], [0xe8e0cc,0xdcd2ba,0xefe8da][i%3], 0x4a4640, se[2], se[3]); // 東側：正面(-z)→西
+  const gw = shop(-10.8, z, -Math.PI/2, sw[0], sw[1], [0xdcd2ba,0xefe8da,0xe2d8c4][i%3], 0x55483a, sw[2], sw[3]); // 西側：正面(-z)→東
+  SHOPS.push({ grp: ge, x: 10.8, z, hits: 0, shakeT: 0, broken: false });
+  SHOPS.push({ grp: gw, x: -10.8, z, hits: 0, shakeT: 0, broken: false });
+}
+/* ================= バチ当たりの雷 ================= */
+const boltGrp = new THREE.Group(); boltGrp.visible = false; scene.add(boltGrp);
+{
+  const bm = new THREE.MeshBasicMaterial({ color: 0xfff8b0, transparent: true, opacity: 0.98 });
+  const bg = new THREE.MeshBasicMaterial({ color: 0xffe14d, transparent: true, opacity: 0.32, blending: THREE.AdditiveBlending, depthWrite: false });
+  const pts = [[0,0,0],[0.5,-3,0.2],[-0.3,-6,-0.2],[0.4,-9,0.1],[0,-14,0]];
+  for (let i = 0; i < pts.length - 1; i++){
+    const a = new THREE.Vector3(...pts[i]), b = new THREE.Vector3(...pts[i+1]);
+    const len = a.distanceTo(b);
+    const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+    const seg = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.09, len, 5), bm);
+    seg.position.copy(a).lerp(b, 0.5); seg.quaternion.copy(q);
+    boltGrp.add(seg);
+    const glow = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.24, len, 5), bg);
+    glow.position.copy(seg.position); glow.quaternion.copy(q);
+    boltGrp.add(glow);
+  }
+}
+const sparkGeo = new THREE.BufferGeometry();
+sparkGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(14 * 3), 3));
+const sparkMat = new THREE.PointsMaterial({ color: 0xffe97a, size: 0.22, transparent: true, opacity: 0 });
+const sparks = new THREE.Points(sparkGeo, sparkMat); sparks.visible = false; sparks.frustumCulled = false; scene.add(sparks);
+const sparkVel = [];
+function strikeBolt(){
+  boltGrp.position.set(P.x, groundY(P.z) + 14.5, P.z);
+  boltGrp.rotation.y = rnd(0, 6.28);
+  boltGrp.visible = true;
+  G.boltT = 2.2; G.flashT = 0.5;
+  $('flash').style.opacity = 1;
+  noiseBurst(0.5, 220, 0.35); tone(52, 0.6, 'sine', 0.28, -14); tone(1400, 0.06, 'square', 0.1, -500);
+  setTimeout(() => { noiseBurst(0.9, 110, 0.16); }, 380);
+  const pos = sparkGeo.attributes.position.array;
+  sparkVel.length = 0;
+  for (let i = 0; i < 14; i++){
+    pos[i*3] = P.x; pos[i*3+1] = groundY(P.z) + 1.1; pos[i*3+2] = P.z;
+    const a = rnd(0, Math.PI * 2), sp = rnd(1.5, 4.2);
+    sparkVel.push([Math.cos(a) * sp, rnd(1.5, 4.5), Math.sin(a) * sp]);
+  }
+  sparkGeo.attributes.position.needsUpdate = true;
+  sparks.visible = true; sparkMat.opacity = 1;
+}
+
+function updateShops(dt){
+  for (const s of SHOPS){
+    if (s.shakeT > 0){
+      s.shakeT -= dt;
+      s.grp.rotation.z = Math.sin(s.shakeT * 26) * 0.04 * Math.max(0, s.shakeT);
+      if (s.shakeT <= 0 && !s.broken) s.grp.rotation.z = 0;
+    }
+  }
+}
+// 竹野屋（老舗旅館・西側）
+(function(){
+  const g = new THREE.Group(); g.position.set(-13.5, groundY(-190), -190); g.rotation.y = Math.PI/2; scene.add(g);
+  box(g, 13, 8.5, 9, 0xe6ddc8, 0, 4.25, 0);
+  gableRoof(g, 14.4, 10.6, 8.35, 2.4, 0x3a3630);
+  box(g, 10, 3.4, 0.2, 0x2e2620, 0, 1.7, 4.55);
+  signBoard(g, ['竹野屋'], '#2e2620', '#f5efe0', 5.5, 1.5, 0, 6.8, 4.62);
+})();
+// ご縁横丁（西側・小路の入口）
+(function(){
+  const g = new THREE.Group(); g.position.set(-8.6, groundY(-318), -318); g.rotation.y = Math.PI/2; scene.add(g);
+  box(g, 0.35, 4.4, 0.35, 0x6b4a2e, -2.2, 2.2, 0);
+  box(g, 0.35, 4.4, 0.35, 0x6b4a2e, 2.2, 2.2, 0);
+  box(g, 5.4, 0.4, 0.5, 0x6b4a2e, 0, 4.5, 0);
+  signBoard(g, ['ご縁横丁'], '#7a2020', '#ffffff', 3.4, 0.95, 0, 3.9, 0.1);
+})();
+// 出雲大社前駅（南端・東側、洋風駅舎）
+(function(){
+  const g = new THREE.Group(); g.position.set(13, groundY(6), 6); g.rotation.y = -Math.PI/2; scene.add(g);
+  box(g, 12, 5.5, 7, 0xe9e2d2, 0, 2.75, 0);
+  gableRoof(g, 13.4, 8.6, 5.35, 2.0, 0x5e4a3a);
+  box(g, 3.4, 3.4, 3.4, 0xe9e2d2, 0, 7.6, 0); // 時計塔風
+  gableRoof(g, 4.6, 4.6, 9.3, 1.3, 0x5e4a3a);
+  sph(g, 0.55, 0xffffff, 0, 8.1, 1.75);
+  signBoard(g, ['出雲大社前駅'], '#27435f', '#ffffff', 6.4, 1.1, 0, 4.4, 3.6);
+})();
+// 一畑電車（駅の線路と停車中の2両編成）
+(function(){
+  const g = new THREE.Group(); scene.add(g);
+  const TX = 20.5;
+  // バラスト＋枕木＋レール
+  box(g, 3.6, 0.18, 56, 0x8f8a80, TX, 0.02, 2);
+  for (let z = -22; z <= 28; z += 1.3) box(g, 2.2, 0.08, 0.5, 0x5e4a38, TX, 0.13, z);
+  box(g, 0.09, 0.12, 56, 0x6a6e74, TX-0.55, 0.2, 2);
+  box(g, 0.09, 0.12, 56, 0x6a6e74, TX+0.55, 0.2, 2);
+  // 車止め（終着駅）
+  const b1 = box(g, 0.18, 1.6, 0.18, 0x8a2e2e, TX-0.55, 0.7, -21); b1.rotation.x = 0.5;
+  const b2 = box(g, 0.18, 1.6, 0.18, 0x8a2e2e, TX+0.55, 0.7, -21); b2.rotation.x = 0.5;
+  box(g, 1.7, 0.22, 0.22, 0x8a2e2e, TX, 1.25, -21.4);
+  // ホーム
+  box(g, 2.6, 0.55, 30, 0xb0aa9e, 17.6, 0.27, 3);
+  box(g, 2.6, 0.07, 30, 0xd8d2c4, 17.6, 0.58, 3);
+  // 架線柱
+  for (const z of [-14, 4, 22]){
+    cyl(g, 0.09, 0.11, 6.4, 0x555c64, TX+2.2, 3.2, z, 8);
+    box(g, 2.6, 0.1, 0.1, 0x555c64, TX+1.1, 6.1, z);
+  }
+  // 車両（クリーム＋オレンジ帯）
+  function trainCar(cz){
+    const c = new THREE.Group(); c.position.set(TX, 0, cz); g.add(c);
+    box(c, 2.8, 2.2, 11, 0xf0e6d2, 0, 1.75, 0);
+    box(c, 2.84, 0.5, 11.02, 0xe07b2a, 0, 1.15, 0);
+    box(c, 2.84, 0.75, 11.02, 0x2c3540, 0, 2.35, 0); // 窓帯
+    box(c, 2.6, 0.35, 10.6, 0x707880, 0, 3.05, 0); // 屋根
+    box(c, 2.2, 0.5, 9.4, 0x333338, 0, 0.35, 0);   // 床下
+    for (const wz of [-3.6, 3.6]){ box(c, 2.0, 0.6, 2.2, 0x22242a, 0, 0.35, wz); }
+    box(c, 0.7, 0.5, 0.15, 0x2c3540, -0.8, 2.2, -5.55); // 前面窓
+    box(c, 0.7, 0.5, 0.15, 0x2c3540, 0.8, 2.2, -5.55);
+    return c;
+  }
+  trainCar(9.5); trainCar(-2.2);
+  box(g, 0.12, 2.6, 0.12, 0x555c64, 17.6, 1.3, 12);
+  signBoard(g, ['一畑電車'], '#e07b2a', '#ffffff', 3.2, 0.8, 17.6, 2.9, 12, -Math.PI/2);
+})();
+// 宇迦橋（渡れる橋：デッキは地面と面一、欄干は両脇だけ＝視界を塞がない）
+(function(){
+  const g = new THREE.Group(); g.position.set(0, 0, 13.5); scene.add(g);
+  box(g, 11, 0.14, 5.6, 0x9c4a3c, 0, 0.03, 0);
+  for (const sx of [-5.35, 5.35]){
+    box(g, 0.3, 0.75, 5.6, 0xb03a2e, sx, 0.45, 0);
+    box(g, 0.44, 0.12, 5.6, 0x8e2f24, sx, 0.88, 0);
+  }
+})();
+
+/* ================= 道路まわり（車・信号・電柱） ================= */
+function car(x, z, ry, color){
+  const g = new THREE.Group(); g.position.set(x, groundY(z), z); g.rotation.y = ry; scene.add(g);
+  box(g, 1.8, 0.55, 4.2, color, 0, 0.55, 0);
+  box(g, 1.6, 0.5, 2.2, 0x2c3540, 0, 1.05, -0.2);
+  box(g, 1.65, 0.12, 2.3, color, 0, 1.32, -0.2);
+  for (const wx of [-0.85, 0.85]) for (const wz of [-1.35, 1.35]){
+    const w = cyl(g, 0.34, 0.34, 0.2, 0x1c1c20, wx, 0.34, wz, 10); w.rotation.z = Math.PI/2;
+  }
+  box(g, 0.5, 0.16, 0.06, 0xffe9a8, -0.55, 0.62, -2.12);
+  box(g, 0.5, 0.16, 0.06, 0xffe9a8, 0.55, 0.62, -2.12);
+  box(g, 0.5, 0.14, 0.06, 0xd23c2a, -0.55, 0.62, 2.12);
+  box(g, 0.5, 0.14, 0.06, 0xd23c2a, 0.55, 0.62, 2.12);
+  return g;
+}
+car(8.6, 12, 0.25, 0xd8d8d8); car(8.8, 5, 0.15, 0x33415e); car(-8.6, 10, -0.2, 0x8c2e2e); // 駅前の駐車
+car(7.9, -58, 0.06, 0x707880); car(-7.9, -132, -0.05, 0xe0e0e0); // 路肩の駐車
+// 信号機（宇迦橋のたもと）
+(function(){
+  const g = new THREE.Group(); g.position.set(7.2, groundY(-3), -3); scene.add(g);
+  cyl(g, 0.09, 0.11, 5.6, 0x555c64, 0, 2.8, 0, 8);
+  const arm = box(g, 2.6, 0.12, 0.12, 0x555c64, -1.2, 5.5, 0);
+  box(g, 1.15, 0.38, 0.3, 0x22242c, -2.3, 5.15, 0);
+  sph(g, 0.11, 0xd23c2a, -2.62, 5.15, 0.17);
+  sph(g, 0.11, 0xe8c33a, -2.3, 5.15, 0.17);
+  sph(g, 0.11, 0x2ecc71, -1.98, 5.15, 0.17);
+})();
+// 電柱（左右交互）
+for (let i = 0, z = -14; z >= -330; i++, z -= 46){
+  const sx = i % 2 === 0 ? -7.4 : 7.4;
+  const g = new THREE.Group(); g.position.set(sx, groundY(z), z); scene.add(g);
+  cyl(g, 0.11, 0.14, 7.4, 0x6e6258, 0, 3.7, 0, 8);
+  box(g, 1.7, 0.12, 0.12, 0x6e6258, 0, 6.7, 0);
+  box(g, 0.5, 0.7, 0.4, 0x4a4a52, sx > 0 ? -0.5 : 0.5, 6.1, 0);
+}
+
+/* ================= 横切る道路の車と信号 ================= */
+const CROSS_CARS = [];
+(function(){
+  function crossSignal(x, z, ry){
+    const g = new THREE.Group(); g.position.set(x, groundY(z), z); g.rotation.y = ry; scene.add(g);
+    cyl(g, 0.08, 0.1, 4.6, 0x555c64, 0, 2.3, 0, 8);
+    box(g, 0.34, 1.05, 0.26, 0x22242c, 0, 4.35, 0);
+    sph(g, 0.1, 0xd23c2a, 0, 4.68, 0.15);
+    sph(g, 0.1, 0xe8c33a, 0, 4.35, 0.15);
+    sph(g, 0.1, 0x2ecc71, 0, 4.02, 0.15);
+  }
+  crossSignal(7.8, -330.8, Math.PI);   // 参拝者側（南東角）
+  crossSignal(-7.8, -339.7, 0);        // 北西角
+  // 石碑（勢溜の鳥居の脇）
+  const stele = box(scene, 0.85, 3.6, 0.5, 0x9a958a, 8.8, groundY(-341) + 1.8, -341);
+  box(scene, 1.3, 0.4, 0.9, 0x8f8a80, 8.8, groundY(-341) + 0.2, -341);
+  // 横断する車（2車線・参拝者が渡ると手前で止まる）
+  function crossCar(dir, z, x0, color){
+    const g = new THREE.Group(); scene.add(g);
+    box(g, 1.8, 0.55, 4.2, color, 0, 0.55, 0);
+    box(g, 1.6, 0.5, 2.2, 0x2c3540, 0, 1.05, -0.2);
+    box(g, 1.65, 0.12, 2.3, color, 0, 1.32, -0.2);
+    for (const wx of [-0.85, 0.85]) for (const wz of [-1.35, 1.35]){
+      const w = cyl(g, 0.34, 0.34, 0.2, 0x1c1c20, wx, 0.34, wz, 10); w.rotation.z = Math.PI/2;
+    }
+    box(g, 0.5, 0.16, 0.06, 0xffe9a8, -0.55, 0.62, -2.12);
+    box(g, 0.5, 0.16, 0.06, 0xffe9a8, 0.55, 0.62, -2.12);
+    box(g, 0.5, 0.14, 0.06, 0xd23c2a, -0.55, 0.62, 2.12);
+    box(g, 0.5, 0.14, 0.06, 0xd23c2a, 0.55, 0.62, 2.12);
+    g.position.set(x0, groundY(z), z);
+    g.rotation.y = dir > 0 ? -Math.PI/2 : Math.PI/2;
+    const c = { grp: g, dir, z, x: x0, speed: 0, cruise: rnd(11, 15) };
+    CROSS_CARS.push(c); return c;
+  }
+  crossCar( 1, -333.2, -30, 0x22242c);
+  crossCar( 1, -333.2,  18, 0xd8d8d8);
+  crossCar(-1, -337.8,  26, 0x5e7a9e);
+  crossCar(-1, -337.8, -22, 0x8c2e2e);
+})();
+function updateCrossCars(dt){
+  // 車は止まらない（横断歩道でも減速しない）
+  for (const c of CROSS_CARS){
+    c.speed = c.cruise;
+    c.x += c.dir * c.speed * dt;
+    if (c.x > 52) c.x = -52;
+    if (c.x < -52) c.x = 52;
+    c.grp.position.x = c.x;
+    c.grp.position.y = groundY(c.z);
+    // 接触＝一発で終わる
+    if (G.phase === 'run' && c.speed > 3 && Math.abs(P.x - c.x) < 1.9 && Math.abs(P.z - c.z) < 1.2) hitByCar(c);
+  }
+}
+function hitByCar(c){
+  G.phase = 'dead'; G.deadT = 0; G.endKind = 'car';
+  P.vx = 0; P.vz = 0;
+  P.kbx = c.dir * 13; P.kbz = rnd(-1, 1);
+  P.flyV = 8; P.flyY = 0.02; P.flyRot = 0; P.spin = rnd(6, 9) * (Math.random() < 0.5 ? -1 : 1);
+  $('punchBtn').style.display = 'none';
+  $('dashBtn').style.display = 'none';
+  G.dashHeld = false;
+  $('stickL').style.display = 'none';
+  noiseBurst(0.3, 400, 0.3); tone(70, 0.5, 'sine', 0.2, -20);
+}
+
+/* ================= 境内の建物 ================= */
+// 祓社（参道右手の小さな社）
+(function(){
+  const g = new THREE.Group(); g.position.set(5.6, groundY(-356), -356); g.rotation.y = -0.5; scene.add(g);
+  box(g, 2.6, 0.5, 2.2, 0x8f8a80, 0, 0.25, 0);
+  box(g, 1.9, 1.7, 1.5, 0x7a4a30, 0, 1.35, 0);
+  gableRoof(g, 3.0, 2.6, 2.12, 0.9, 0x3a3630);
+  signBoard(g, ['祓社'], '#f5efe0', '#7a2020', 1.3, 0.6, 0, 1.5, -0.85, Math.PI);
+})();
+// 祓橋（欄干）
+(function(){
+  const g = new THREE.Group(); g.position.set(0, groundY(-370), -370); scene.add(g);
+  box(g, 13.6, 0.35, 3.6, 0xa8a094, 0, 0.32, 0);
+  for (const sx of [-6.4, 6.4]) for (let i=-1; i<=1; i++) box(g, 0.28, 1.0, 0.28, 0x8f887a, sx, 0.9, i*1.6);
+  box(g, 0.25, 0.22, 3.6, 0x8f887a, -6.4, 1.42, 0);
+  box(g, 0.25, 0.22, 3.6, 0x8f887a, 6.4, 1.42, 0);
+})();
+// 松の参道の松
+function pine(x, z, s=1){
+  const g = new THREE.Group(); g.position.set(x, groundY(z), z); g.rotation.y = rnd(0,6.28); scene.add(g);
+  const trunk = cyl(g, 0.22*s, 0.34*s, 3.6*s, 0x4a3826, 0, 1.8*s, 0, 8);
+  trunk.rotation.z = rnd(-0.09, 0.09);
+  sph(g, 2.1*s, 0x2e5230, 0, 4.6*s, 0, 1.25, 0.5, 1.25);
+  sph(g, 1.6*s, 0x38663c, 1.1*s, 3.9*s, 0.4, 1.2, 0.45, 1.2);
+  sph(g, 1.4*s, 0x2a4c2c, -1.2*s, 4.1*s, -0.3, 1.2, 0.45, 1.2);
+  return g;
+}
+for (let z = -398; z >= -538; z -= 7){
+  pine(-11.0 + rnd(-0.7,0.7), z + rnd(-1.4,1.4), rnd(0.95,1.3));
+  pine( 11.0 + rnd(-0.7,0.7), z + rnd(-1.4,1.4), rnd(0.95,1.3));
+}
+pine(-9.5, -362, 1.2); pine(9.5, -366, 1.15); pine(-10, -462, 1.35); pine(10.5, -512, 1.25);
+// 神門通りの松並木（歩道の植え込み）
+for (let z = -26; z >= -322; z -= 27){
+  pine(-6.9, z + rnd(-2, 2), rnd(0.95, 1.18));
+  pine( 6.9, z - 12 + rnd(-2, 2), rnd(0.95, 1.18));
+}
+// 手水舎（左手）
+(function(){
+  const g = new THREE.Group(); g.position.set(-10.6, groundY(-536), -536); g.rotation.y = 0.35; scene.add(g);
+  for (const px of [-1.5,1.5]) for (const pz of [-1,1]) cyl(g, 0.11, 0.11, 2.6, 0x6b4a2e, px, 1.3, pz, 8);
+  gableRoof(g, 4.6, 3.4, 2.55, 1.0, 0x4f7a68);
+  box(g, 2.9, 0.75, 1.7, 0x8f8a80, 0, 0.55, 0);
+  const w = new THREE.Mesh(new THREE.PlaneGeometry(2.5,1.3), M(0x5d94b8));
+  w.rotation.x = -Math.PI/2; w.position.set(0, 0.94, 0); g.add(w);
+  box(g, 0.7, 0.08, 0.16, 0xb08d4f, -0.7, 1.05, 0.2);
+  box(g, 0.7, 0.08, 0.16, 0xb08d4f, 0.6, 1.05, -0.25);
+  signBoard(g, ['手水舎'], '#f5efe0', '#27435f', 1.5, 0.6, 0, 2.2, -1.35, Math.PI);
+})();
+// 神馬・神牛（銅鳥居の手前）
+function statue(x, z, kind){
+  const g = new THREE.Group(); g.position.set(x, groundY(z), z); g.rotation.y = x<0 ? 0.5 : -0.5; scene.add(g);
+  const bronze = 0x54685a;
+  box(g, 1.5, 0.8, 1.5, 0x8f8a80, 0, 0.4, 0);
+  if (kind === 'horse'){
+    box(g, 0.55, 0.6, 1.35, bronze, 0, 1.55, 0);
+    const neck = box(g, 0.34, 0.8, 0.4, bronze, 0, 2.0, -0.75); neck.rotation.x = 0.6;
+    box(g, 0.3, 0.34, 0.7, bronze, 0, 2.35, -1.05);
+    for (const lx of [-0.18,0.18]) for (const lz of [-0.5,0.5]) cyl(g, 0.06, 0.05, 0.75, bronze, lx, 1.05, lz, 6);
+    const tail = box(g, 0.12, 0.7, 0.12, bronze, 0, 1.6, 0.75); tail.rotation.x = -0.3;
+  } else {
+    box(g, 0.7, 0.65, 1.3, bronze, 0, 1.5, 0);
+    box(g, 0.55, 0.5, 0.45, bronze, 0, 1.75, -0.85);
+    const h1 = cyl(g, 0.04, 0.04, 0.5, bronze, -0.35, 2.0, -0.85, 6); h1.rotation.z = 1.1;
+    const h2 = cyl(g, 0.04, 0.04, 0.5, bronze, 0.35, 2.0, -0.85, 6); h2.rotation.z = -1.1;
+    for (const lx of [-0.24,0.24]) for (const lz of [-0.48,0.48]) cyl(g, 0.07, 0.06, 0.7, bronze, lx, 1.0, lz, 6);
+  }
+  return g;
+}
+statue(-3.6, -539, 'horse'); statue(3.6, -539, 'cow');
+// 石灯籠
+function lantern(x, z){
+  const g = new THREE.Group(); g.position.set(x, groundY(z), z); scene.add(g);
+  cyl(g, 0.3, 0.38, 0.25, 0x8f8a80, 0, 0.12, 0, 8);
+  cyl(g, 0.11, 0.13, 1.0, 0x97928a, 0, 0.75, 0, 8);
+  box(g, 0.62, 0.45, 0.62, 0xa39c90, 0, 1.45, 0);
+  box(g, 0.4, 0.3, 0.4, 0xffe9a8, 0, 1.45, 0);
+  const cap = cyl(g, 0.05, 0.5, 0.35, 0x8f8a80, 0, 1.85, 0, 4); cap.rotation.y = Math.PI/4;
+}
+for (let z = -356; z >= -540; z -= 16){ lantern(-8.6, z); lantern(8.6, z+2); }
+// しめ縄
+function shimenawa(parent, x, y, z, len, r){
+  const rope = cyl(parent, r, r, len, 0xc9a86a, x, y, z, 10); rope.rotation.z = Math.PI/2;
+  const n = Math.max(3, Math.round(len/2.2));
+  for (let i=0; i<n; i++){
+    const tx = x - len/2 + (i+0.5)*(len/n);
+    const tas = cyl(parent, r*0.32, r*0.55, r*2.6, 0xbd9a58, tx, y - r*1.7, z, 8);
+    const shide = box(parent, 0.22, 0.5, 0.04, 0xffffff, tx + 0.5, y - r*0.9, z - 0.05);
+    shide.rotation.z = 0.25;
+  }
+}
+// 拝殿
+let saisenMesh = null;
+(function(){
+  const g = new THREE.Group(); g.position.set(0, groundY(-576), -576); scene.add(g);
+  box(g, 23, 4.6, 8, 0xe9e2d2, 0, 2.3, 0);
+  box(g, 23, 1.1, 8.4, 0x6b4a2e, 0, 0.55, 0);
+  for (let i=-4; i<=4; i++) box(g, 0.5, 4.6, 0.5, 0x7a4a30, i*2.5, 2.3, 4.05);
+  box(g, 5.5, 3.4, 0.3, 0x5e4028, 0, 1.9, 4.0);
+  gableRoof(g, 26.5, 10.5, 4.45, 3.4, 0x3f3d42);
+  gableRoof(g, 20, 7.5, 6.9, 2.2, 0x45434a);
+  shimenawa(g, 0, 3.6, 4.35, 8.5, 0.5);
+  saisenMesh = box(g, 3.2, 0.9, 1.1, 0x7a4a30, 0, 0.45, 5.6); // 賽銭箱
+  signBoard(g, ['拝殿'], '#7a2020', '#ffffff', 3.2, 0.95, 8.6, 3.6, 4.25);
+})();
+// 八足門＋本殿（拝殿の奥）
+(function(){
+  const g = new THREE.Group(); g.position.set(0, groundY(-590), -590); scene.add(g);
+  for (const px of [-3.4,-1.15,1.15,3.4]) cyl(g, 0.16, 0.16, 3.2, 0x7a4a30, px, 1.6, 0, 8);
+  gableRoof(g, 9.8, 3.6, 3.15, 1.3, 0x3f3d42);
+  // 本殿
+  const h = new THREE.Group(); h.position.set(0, 1.2, -9); g.add(h);
+  box(h, 11, 4.5, 7, 0x8a6844, 0, 2.25, 0);
+  gableRoof(h, 14, 9.2, 4.35, 3.2, 0x4a3a2a);
+  for (const sx of [-6.2, 6.2]){ // 千木
+    const c1 = box(h, 0.28, 2.6, 0.28, 0x3a2c1e, sx, 8.3, 0); c1.rotation.z = 0.5;
+    const c2 = box(h, 0.28, 2.6, 0.28, 0x3a2c1e, sx, 8.3, 0); c2.rotation.z = -0.5;
+  }
+  for (let i=-2; i<=2; i++){ const k = cyl(h, 0.16, 0.16, 1.1, 0x3a2c1e, i*1.5, 7.8, 0, 8); k.rotation.x = Math.PI/2; } // 鰹木
+})();
+// 神楽殿（大しめ縄・西側）
+(function(){
+  const g = new THREE.Group(); g.position.set(-25, groundY(-552), -552); g.rotation.y = Math.PI/2; scene.add(g);
+  box(g, 17, 5.2, 8, 0xe9e2d2, 0, 2.6, 0);
+  for (let i=-3; i<=3; i++) box(g, 0.5, 5.2, 0.5, 0x7a4a30, i*2.6, 2.6, 4.05);
+  gableRoof(g, 19.6, 10.5, 5.05, 3.2, 0x3f3d42);
+  shimenawa(g, 0, 3.9, 4.4, 13.5, 1.05); // 日本一の大しめ縄
+  signBoard(g, ['神楽殿'], '#7a2020', '#ffffff', 3.4, 1, -6.4, 4.2, 4.25);
+})();
+// 十九社（東西）
+function jugosha(x, z, ry){
+  const g = new THREE.Group(); g.position.set(x, groundY(z), z); g.rotation.y = ry; scene.add(g);
+  box(g, 19, 3.2, 3.6, 0xd8cdb4, 0, 1.6, 0);
+  for (let i=-4; i<=4; i++) box(g, 1.3, 2.2, 0.12, 0x7a4a30, i*2, 1.1, 1.85);
+  gableRoof(g, 20.6, 5.2, 3.05, 1.4, 0x4a4640);
+}
+jugosha(24, -568, -Math.PI/2); jugosha(-27, -580, Math.PI/2);
+// 背景：八雲山と木々・奥の建物
+(function(){
+  const yama = sph(scene, 60, 0x4d7048, -10, groundY(-580)-26, -635, 1.6, 0.62, 0.7);
+  sph(scene, 42, 0x557a50, 55, groundY(-580)-18, -610, 1.4, 0.6, 0.7);
+  sph(scene, 46, 0x47683f, -70, groundY(-580)-20, -605, 1.4, 0.6, 0.7);
+  for (let i=0; i<26; i++){
+    const side = i%2 ? 1 : -1;
+    const z = rnd(-570, 0), x = side * rnd(20, 40);
+    sph(scene, rnd(2.5,4.5), [0x3d6b3a,0x2e5230,0x47683f][i%3], x, groundY(z)+rnd(2.5,4), z, 1, 0.8, 1);
+    cyl(scene, 0.2, 0.3, 2.6, 0x4a3826, x, groundY(z)+1.1, z, 7);
+  }
+  for (let i=0; i<10; i++){ // 通りの奥行き用の二列目建物
+    const side = i%2 ? 1 : -1;
+    const z = -20 - i*36;
+    box(scene, 10, rnd(6,9), 8, [0xcfc4ac,0xbfb49a,0xd8d0bc][i%3], side*21, groundY(z)+3, z);
+  }
+})();
+
+/* ================= 人物 ================= */
+const COATS = [0x33415e,0x22242c,0x5e3a2e,0x74353a,0x707880,0x8c7a5a,0x2e5230,0x946b4a,0xb8b0a0,0x4a3a5e];
+const SKINS = [0xf2c9a0,0xe8b88a,0xd9a06e];
+function makeFigure(coat, opts={}){
+  const g = new THREE.Group();
+  const s = opts.scale || 1;
+  const skin = SKINS[Math.floor(Math.random()*SKINS.length)];
+  const pants = opts.pants || [0x2c2c34,0x4a4038,0x3a4a5e,0x5e5e5e][Math.floor(Math.random()*4)];
+  // 脚（股関節ピボットで振る）
+  function makeLeg(x){
+    const piv = new THREE.Group(); piv.position.set(x, 0.78, 0); g.add(piv);
+    box(piv, 0.16, 0.78, 0.18, pants, 0, -0.39, 0);
+    sph(piv, 0.09, 0xf0f0f0, 0, -0.73, -0.04, 1, 0.6, 1.5); // 靴
+    return piv;
+  }
+  const legL = makeLeg(-0.11), legR = makeLeg(0.11);
+  // 胴（コート）
+  const torso = box(g, 0.52, 0.78, 0.3, coat, 0, 1.17, 0);
+  // 腕（肩ピボットで振る）
+  function makeArm(x){
+    const piv = new THREE.Group(); piv.position.set(x, 1.47, 0); g.add(piv);
+    box(piv, 0.13, 0.62, 0.15, coat, 0, -0.31, 0);
+    sph(piv, 0.07, skin, 0, -0.65, 0); // 手
+    return piv;
+  }
+  const armL = makeArm(-0.34), armR = makeArm(0.34);
+  // 頭
+  sph(g, 0.21, skin, 0, 1.78, 0);
+  if (opts.haregi){ // 晴れ着（女性・正月）
+    box(g, 0.54, 0.95, 0.32, coat, 0, 1.08, 0);
+    box(g, 0.56, 0.16, 0.34, 0xd8b13c, 0, 1.02, 0); // 帯
+    sph(g, 0.22, 0x1c1c22, 0, 1.86, 0.02, 1, 0.75, 1); // 髪
+  } else if (opts.hat === 'knit'){
+    sph(g, 0.22, opts.hatColor || 0xd8d8d8, 0, 1.86, 0, 1, 0.62, 1);
+  } else if (opts.hat === 'cap'){
+    sph(g, 0.22, opts.hatColor || 0x33415e, 0, 1.85, 0, 1, 0.55, 1);
+    box(g, 0.3, 0.05, 0.22, opts.hatColor || 0x33415e, 0, 1.8, -0.26);
+  } else {
+    sph(g, 0.215, 0x2a2320, 0, 1.84, 0.015, 1, 0.72, 1); // 髪
+  }
+  if (opts.scarf) box(g, 0.4, 0.14, 0.36, opts.scarf, 0, 1.56, 0);
+  if (opts.bag) box(g, 0.3, 0.36, 0.12, opts.bag, 0.42, 1.0, 0.05);
+  g.scale.setScalar(s);
+  g.userData.parts = { legL, legR, armL, armR, torso };
+  return g;
+}
+function swingLimbs(fig, t, amt){
+  const p = fig.userData.parts;
+  const s = Math.sin(t) * amt;
+  p.legL.rotation.x = s; p.legR.rotation.x = -s;
+  p.armL.rotation.x = -s*0.8; p.armR.rotation.x = s*0.8;
+}
+// プレイヤー（赤ダウン＋白ニット帽で目立たせる）
+const player = makeFigure(0xd23c2a, { hat:'knit', hatColor:0xf2f2f2, scarf:0xffd94d });
+scene.add(player);
+const P = { x:0, z:13, vx:0, vz:0, angle:Math.PI, stamina:100, bowT:0, clapT:0, punchT:0, punchCd:0, kbx:0, kbz:0, flyY:0, flyV:0, flyRot:0, spin:0, dashOn:false, speedMul:1, magSm:0, phase:0 };
+player.position.set(P.x, groundY(P.z), P.z);
+
+/* ================= 人混み ================= */
+const NPCS = [];
+function crowdStage(){ // 進むほど人混みが濃くなる
+  if (P.z > -170) return 0;
+  if (P.z > -338) return 1;
+  if (P.z > -470) return 2;
+  return 3;
+}
+const SPAWN_AHEAD = [ [38, 78], [34, 66], [32, 62], [30, 60] ];
+const RUNNER_P = [ 0.10, 0.12, 0.14, 0.17 ];
+const SOUTH_P = [ 0.76, 0.78, 0.80, 0.82 ];
+function spawnNPC(n, initial){
+  const st = crowdStage();
+  const ahead = initial ? rnd(16, 95) : rnd(SPAWN_AHEAD[st][0], SPAWN_AHEAD[st][1]);
+  n.z = P.z - ahead;
+  if (n.z < -564) n.z = -564 + rnd(0, 6);
+  // 参道では間引く＆同じ深さに固めない（両側のレーンが同時に壁にならないように）
+  if (!initial && n.z < -376){
+    n.z -= rnd(10, 26);
+    if (n.z < -564) n.z = -564 + rnd(0, 6);
+    for (let tries = 0; tries < 2; tries++){
+      let cnt = 0;
+      for (const o of NPCS){ if (o !== n && o.z < -376 && Math.abs(o.z - n.z) < 3.5) cnt++; }
+      if (cnt < 2) break;
+      n.z -= rnd(8, 16);
+      if (n.z < -564) n.z = -564 + rnd(0, 6);
+    }
+  }
+  n.dir = Math.random() < SOUTH_P[st] ? 1 : -1; // 大半は帰り道（南行）
+  const w = widthAt(n.z);
+  let x = rnd(-w+0.5, w-0.5);
+  if (n.z < -376 && Math.abs(x) < 1.8) x = Math.sign(x || 1) * rnd(1.9, w-0.5); // 参道では中央を空ける
+  n.laneX = x; n.x = x;
+  n.runner = Math.random() < RUNNER_P[crowdStage()]; // たまに走ってる参拝客（奥ほど多い）
+  n.speed = n.runner ? rnd(7.5, 9.5) : (n.dir > 0 ? rnd(2.5, 4.2) : rnd(1.9, 3.1));
+  n.phase = rnd(0, 6.28);
+  n.stumbleT = 0; n.tipT = 0; n.kbx = 0; n.kbz = 0; n.flyY = 0; n.flyV = 0; n.flyRot = 0; n.spin = 0;
+  n.photo = 0; n.isPhotog = false; n.poseArm = false;
+  if (n.phoneMesh) n.phoneMesh.visible = false;
+  n.grp.visible = true;
+}
+/* ================= 神様（特別エンド用） ================= */
+const GOD = (function(){
+  const grp = makeFigure(0xfffdf4, { scale: 1.32, hat: null, pants: 0xfffdf4 });
+  const halo = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.06, 8, 24), M(0xffd977));
+  halo.rotation.x = Math.PI / 2; halo.position.y = 2.45; grp.add(halo);
+  box(grp, 0.5, 0.1, 0.3, 0xffd977, 0, 1.15, 0);
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+  const cx = cv.getContext('2d');
+  const gr = cx.createRadialGradient(64, 64, 4, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(255,240,190,0.95)'); gr.addColorStop(0.5, 'rgba(255,225,150,0.35)'); gr.addColorStop(1, 'rgba(255,225,150,0)');
+  cx.fillStyle = gr; cx.fillRect(0, 0, 128, 128);
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0 }));
+  glow.position.y = 1.3; glow.scale.setScalar(7); grp.add(glow);
+  const light = new THREE.PointLight(0xffe9a8, 0, 20); light.position.y = 1.6; grp.add(light);
+  grp.position.set(0, groundY(-570.5), -570.5);
+  grp.rotation.y = Math.PI;
+  grp.visible = false;
+  scene.add(grp);
+  return { grp, light, glow };
+})();
+
+for (let i=0; i<44; i++){
+  const kid = Math.random() < 0.14;
+  const fig = makeFigure(COATS[i % COATS.length], {
+    scale: kid ? 0.68 : rnd(0.94, 1.04),
+    hat: Math.random() < 0.4 ? (Math.random()<0.5?'knit':'cap') : null,
+    hatColor: COATS[Math.floor(Math.random()*COATS.length)],
+    haregi: !kid && Math.random() < 0.13,
+    scarf: Math.random() < 0.3 ? [0xd23c2a,0xffd94d,0x7ba05b,0x5e7a9e][i%4] : null,
+    bag: Math.random() < 0.35 ? [0x8a6844,0x333333,0x74353a][i%3] : null,
+  });
+  scene.add(fig);
+  const n = { grp: fig, x:0, z:0, laneX:0, dir:1, speed:2, phase:0, stumbleT:0, tipT:0, kbx:0, kbz:0, flyY:0, flyV:0, flyRot:0, spin:0, runner:false, photo:0, photoRy:0, isPhotog:false, poseArm:false, flashCd:0, phoneMesh:null };
+  const phm = box(fig.userData.parts.armR, 0.15, 0.22, 0.04, 0x1c1c22, 0, -0.72, -0.08);
+  phm.visible = false; n.phoneMesh = phm;
+  NPCS.push(n); spawnNPC(n, true);
+}
+
+/* ================= 写真撮影の観光客 ================= */
+const PHOTO_SPOTS = [ { z:-60, x:1.2 }, { z:-180, x:-1.2 }, { z:-322, x:0.8 }, { z:-470, x:-1.5 } ];
+const flashMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 1.7), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }));
+flashMesh.visible = false; scene.add(flashMesh);
+let flashT = 0;
+function doFlash(n){
+  flashMesh.position.set(n.x, groundY(n.z) + 1.55, n.z - 0.55);
+  flashMesh.visible = true; flashT = 0.16;
+  if (Math.abs(P.z - n.z) < 32) noiseBurst(0.03, 2600, 0.05);
+}
+function formPhotoGroup(spot){
+  const cand = NPCS.filter(n => n.photo <= 0 && (n.z > P.z + 14 || n.z < P.z - 95));
+  if (cand.length < 5) return;
+  const dur = rnd(6, 10);
+  const offs = [ [-1.3, 0], [0.2, 0.55], [1.5, -0.3], [-0.5, -0.95] ];
+  for (let i = 0; i < 4; i++){
+    const n = cand[i];
+    n.x = n.laneX = spot.x + offs[i][0]; n.z = spot.z + offs[i][1];
+    n.photo = dur; n.photoRy = Math.PI; n.isPhotog = false; n.poseArm = i === 1;
+    n.kbx = 0; n.kbz = 0; n.stumbleT = 0; n.tipT = 0;
+  }
+  const pg = cand[4];
+  pg.x = pg.laneX = spot.x + 0.1; pg.z = spot.z + 4.3;
+  pg.photo = dur; pg.photoRy = 0; pg.isPhotog = true; pg.flashCd = rnd(0.8, 1.6);
+  pg.kbx = 0; pg.kbz = 0; pg.stumbleT = 0; pg.tipT = 0;
+  pg.phoneMesh.visible = true;
+}
+function endPhoto(n){
+  n.isPhotog = false; n.poseArm = false;
+  if (n.phoneMesh) n.phoneMesh.visible = false;
+  n.dir = 1;
+  n.speed = n.runner ? rnd(7.5, 9.5) : rnd(2.5, 4.2);
+}
+
+/* ================= 音 ================= */
+let AC = null;
+function ac(){ if(!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if (AC.state==='suspended') AC.resume(); return AC; }
+function tone(freq, dur, type='sine', vol=0.15, slide=0){
+  try{
+    const a = ac(), o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.value = freq;
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, freq+slide), a.currentTime + dur);
+    g.gain.setValueAtTime(vol, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + dur);
+    o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + dur);
+  }catch(e){}
+}
+function noiseBurst(dur=0.07, freq=1800, vol=0.2){
+  try{
+    const a = ac(), len = Math.floor(a.sampleRate * dur);
+    const buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+    for (let i=0;i<len;i++) d[i] = (Math.random()*2-1) * (1 - i/len);
+    const src = a.createBufferSource(); src.buffer = buf;
+    const f = a.createBiquadFilter(); f.type='bandpass'; f.frequency.value = freq; f.Q.value = 0.8;
+    const g = a.createGain(); g.gain.value = vol;
+    src.connect(f).connect(g).connect(a.destination); src.start();
+  }catch(e){}
+}
+const sndBump = ()=>{ tone(140, 0.12, 'sine', 0.22, -60); noiseBurst(0.05, 500, 0.12); };
+const sndWarn = ()=> tone(880, 0.09, 'square', 0.06);
+const sndClap = ()=>{ noiseBurst(0.06, 1600, 0.3); setTimeout(()=>noiseBurst(0.05, 1400, 0.18), 30); };
+const sndBow  = ()=> tone(520, 0.16, 'sine', 0.08, -140);
+const sndBad  = ()=> tone(220, 0.2, 'sawtooth', 0.08, -80);
+const sndGoal = ()=>{ tone(660, 0.25, 'sine', 0.14); setTimeout(()=>tone(880, 0.4, 'sine', 0.14), 140); };
+addEventListener('pointerdown', () => { if (AC && AC.state === 'suspended') AC.resume(); }, true);
+
+/* ================= 環境音（参拝客のがやがや＋小鳥） ================= */
+let ambNodes = null, ambTimer = null;
+function startAmb(){
+  if (ambNodes) return;
+  try{
+    const a = ac();
+    const len = a.sampleRate * 2;
+    const buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < len; i++){ const w = Math.random() * 2 - 1; last = (last + 0.03 * w) / 1.03; d[i] = last * 3.2; }
+    const src = a.createBufferSource(); src.buffer = buf; src.loop = true;
+    const f = a.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 620; f.Q.value = 0.45;
+    const g = a.createGain(); g.gain.value = 0.04;
+    const lfo = a.createOscillator(), lg = a.createGain();
+    lfo.frequency.value = 0.13; lg.gain.value = 0.014;
+    lfo.connect(lg).connect(g.gain);
+    const lfo2 = a.createOscillator(), lg2 = a.createGain();
+    lfo2.frequency.value = 0.07; lg2.gain.value = 190;
+    lfo2.connect(lg2).connect(f.frequency);
+    src.connect(f).connect(g).connect(a.destination);
+    src.start(); lfo.start(); lfo2.start();
+    ambNodes = { src, lfo, lfo2, g };
+    const chirp = () => {
+      if (!ambNodes) return;
+      try{
+        const t0 = a.currentTime + 0.05;
+        const n = 2 + Math.floor(Math.random() * 3);
+        const base = 2600 + Math.random() * 900;
+        let out = a.destination;
+        if (a.createStereoPanner){ const pan = a.createStereoPanner(); pan.pan.value = Math.random() * 1.4 - 0.7; pan.connect(a.destination); out = pan; }
+        for (let i = 0; i < n; i++){
+          const o = a.createOscillator(), og = a.createGain();
+          o.type = 'sine';
+          const t = t0 + i * 0.11;
+          o.frequency.setValueAtTime(base, t);
+          o.frequency.exponentialRampToValueAtTime(base * (1.15 + Math.random() * 0.25), t + 0.05);
+          o.frequency.exponentialRampToValueAtTime(base * 0.92, t + 0.09);
+          og.gain.setValueAtTime(0, t);
+          og.gain.linearRampToValueAtTime(0.02, t + 0.015);
+          og.gain.linearRampToValueAtTime(0, t + 0.095);
+          o.connect(og).connect(out); o.start(t); o.stop(t + 0.1);
+        }
+      }catch(e){}
+      ambTimer = setTimeout(chirp, 2200 + Math.random() * 3800);
+    };
+    ambTimer = setTimeout(chirp, 900);
+  }catch(e){}
+}
+function stopAmb(){
+  if (ambTimer){ clearTimeout(ambTimer); ambTimer = null; }
+  if (ambNodes){ try{ ambNodes.src.stop(); ambNodes.lfo.stop(); ambNodes.lfo2.stop(); ambNodes.g.disconnect(); }catch(e){} ambNodes = null; }
+}
+
+/* ================= ゲーム状態 ================= */
+const G = { phase:'title', time:0, clockMin:960, manners:100, bumps:0, dashBumps:0, resultShown:false, boltT:0, flashT:0, punches:0, toriiPunches:0, centerTicks:0, centerAcc:0, bumpCd:0, warnCd:0, started:false, prayIdx:0, prayMiss:0, endKind:null, godT:0, dashHeld:false, zone:'', toriiSeen:{}, waveSeen:{}, camMode:'title', introT:0, deadT:0, photoCd:3 };
+const PRAY_SEQ = ['礼','礼','拍','拍','拍','拍','礼'];
+const TORII_ZONES = [
+  { z:-338, name:'勢溜' }, { z:-376, name:'松の参道' }, { z:-546, name:'境内' }, { z:-565, name:'拝殿前' },
+];
+function zoneName(z){
+  if (z > -338) return '神門通り';
+  if (z > -376) return '勢溜';
+  if (z > -546) return '松の参道';
+  if (z > -565) return '境内';
+  return '拝殿前';
+}
+const TORII_POPUPS = [
+  { z:0, label:'一の鳥居' }, { z:-343, label:'二の鳥居（勢溜）' }, { z:-392, label:'三の鳥居' }, { z:-546, label:'四の鳥居（銅鳥居）' },
+];
+const WAVE_POPUPS = [
+  { z:-170, txt:'人混みが増えてきた' }, { z:-338, txt:'初詣ラッシュ！' }, { z:-470, txt:'身動きが取れない…！' },
+];
+function popup(text, cls=''){
+  const el = document.createElement('div');
+  el.className = 'pop ' + cls; el.textContent = text;
+  $('popups').appendChild(el);
+  setTimeout(()=> el.remove(), 1200);
+  while ($('popups').children.length > 3) $('popups').firstChild.remove();
+}
+
+/* ================= 入力（左スティック） ================= */
+const stick = { active:false, id:null, cx:0, cy:0, dx:0, dy:0, mag:0 };
+const keys = {};
+addEventListener('keydown', e=>{ keys[e.key.toLowerCase()] = true; });
+addEventListener('keyup',   e=>{ keys[e.key.toLowerCase()] = false; });
+const cvs = renderer.domElement;
+cvs.addEventListener('pointerdown', e=>{
+  if (G.phase !== 'run') return;
+  stick.active = true; stick.id = e.pointerId; stick.cx = e.clientX; stick.cy = e.clientY; stick.dx = 0; stick.dy = 0; stick.mag = 0;
+  const el = $('stickL');
+  el.style.display = 'block';
+  el.style.left = (e.clientX - 59) + 'px'; el.style.top = (e.clientY - 59) + 'px';
+  el.querySelector('.nub').style.left = '33px'; el.querySelector('.nub').style.top = '33px';
+});
+addEventListener('pointermove', e=>{
+  if (!stick.active || e.pointerId !== stick.id) return;
+  let dx = e.clientX - stick.cx, dy = e.clientY - stick.cy;
+  const d = Math.hypot(dx, dy), max = 36;
+  if (d > max){ dx *= max/d; dy *= max/d; }
+  stick.dx = dx/max; stick.dy = dy/max; stick.mag = Math.min(1, d/max);
+  const nub = $('stickL').querySelector('.nub');
+  nub.style.left = (33 + dx) + 'px'; nub.style.top = (33 + dy) + 'px';
+});
+function stickEnd(e){
+  if (e.pointerId !== stick.id) return;
+  stick.active = false; stick.mag = 0; stick.dx = 0; stick.dy = 0;
+  $('stickL').style.display = 'none';
+}
+addEventListener('pointerup', stickEnd);
+addEventListener('pointercancel', stickEnd);
+
+/* ================= 殴る ================= */
+function punch(){
+  if (G.phase !== 'run' || P.punchCd > 0) return;
+  P.punchCd = 0.45; P.punchT = 0.28;
+  noiseBurst(0.08, 700, 0.22); tone(170, 0.09, 'square', 0.1, -60);
+  const fx = -Math.sin(P.angle), fz = -Math.cos(P.angle);
+  let best = null, bd = 3.4;
+  for (const n of NPCS){
+    const dx = n.x - P.x, dz = n.z - P.z;
+    const d = Math.hypot(dx, dz);
+    if (d < bd && (dx * fx + dz * fz) > 0.15){ best = n; bd = d; }
+  }
+  // 鳥居の柱も殴れる（近い方を優先）
+  let tHit = null, td = 1.9;
+  for (const t of TORIIS){
+    const d = Math.min(
+      Math.hypot(P.x - t.w/2, P.z - t.z),
+      Math.hypot(P.x + t.w/2, P.z - t.z));
+    if (d < td){ tHit = t; td = d; }
+  }
+  // 店も殴れる（同じ店を3回殴ると壁が壊れて器物損壊エンド）
+  let shopHit = null, shopD = 2.4;
+  for (const s of SHOPS){
+    if (s.broken) continue;
+    const fx2 = Math.sign(s.x) * 7.3, fz2 = clamp(P.z, s.z - 4.5, s.z + 4.5);
+    const ddx = fx2 - P.x, ddz = fz2 - P.z, dd = Math.hypot(ddx, ddz);
+    if (dd < shopD && (ddx * fx + ddz * fz) > 0){ shopHit = s; shopD = dd; }
+  }
+  // 賽銭箱も殴れる（殴ると賽銭泥棒エンド）
+  const sdx = 0 - P.x, sdz = -570.4 - P.z, sd = Math.hypot(sdx, sdz);
+  const saisenHit = sd < 6.8 && (sdx * fx + sdz * fz) > 0 && (!best || bd > 2.2);
+  if (saisenHit){
+    if (saisenMesh){ saisenMesh.rotation.z = 0.16; saisenMesh.rotation.x = -0.1; }
+    G.manners = Math.max(0, G.manners - 20); updateMannersPill();
+    popup('賽銭箱を殴った！', 'bad');
+    tone(1560, 0.3, 'square', 0.06); tone(2093, 0.4, 'sine', 0.06); noiseBurst(0.15, 2400, 0.15);
+    if (G.phase === 'run'){
+      G.endKind = 'saisen'; G.phase = 'dead'; G.deadT = 0;
+      $('punchBtn').style.display = 'none';
+      $('dashBtn').style.display = 'none';
+      G.dashHeld = false;
+      $('stickL').style.display = 'none';
+    }
+  } else if (shopHit && (!best || shopD < bd)){
+    shopHit.hits++;
+    shopHit.shakeT = 1.1;
+    G.manners = Math.max(0, G.manners - 15); updateMannersPill();
+    tone(85, 0.22, 'sine', 0.16, -30); noiseBurst(0.12, 300, 0.2);
+    if (shopHit.hits >= 3){
+      shopHit.broken = true;
+      shopHit.grp.position.y -= 0.55;
+      shopHit.grp.rotation.z = 0.09;
+      popup('店の壁が壊れた！', 'bad');
+      noiseBurst(0.4, 500, 0.3); tone(60, 0.5, 'sine', 0.2, -20);
+      if (G.phase === 'run'){
+        G.endKind = 'shop'; G.phase = 'dead'; G.deadT = 0;
+        $('punchBtn').style.display = 'none';
+        $('dashBtn').style.display = 'none';
+        G.dashHeld = false;
+        $('stickL').style.display = 'none';
+      }
+    } else {
+      popup('店を殴った！', 'bad');
+    }
+  } else if (tHit && (!best || td < bd)){
+    tHit.shakeT = 1.1;
+    G.toriiPunches++;
+    G.manners = Math.max(0, G.manners - 20); updateMannersPill();
+    popup('鳥居を殴った！', 'bad');
+    if (tHit.metal){ tone(1150, 0.5, 'sine', 0.09); tone(1890, 0.35, 'sine', 0.05); }
+    else { tone(85, 0.22, 'sine', 0.16, -30); noiseBurst(0.12, 300, 0.2); }
+    if (G.toriiPunches >= 3 && G.phase === 'run'){
+      strikeBolt();
+      G.endKind = 'bachi'; G.phase = 'dead'; G.deadT = 0;
+      P.flyV = 8; P.spin = rnd(7, 10); P.vx = -fx * 3; P.vz = -fz * 3;
+      $('punchBtn').style.display = 'none';
+      $('dashBtn').style.display = 'none';
+      G.dashHeld = false;
+      $('stickL').style.display = 'none';
+    }
+  } else if (best){
+    const dx = best.x - P.x, dz = best.z - P.z, d = Math.max(0.3, Math.hypot(dx, dz));
+    best.kbx = dx / d * 30; best.kbz = dz / d * 30;
+    best.flyV = 13; best.flyY = 0.02; best.flyRot = 0; best.spin = rnd(9, 14) * (Math.random() < 0.5 ? -1 : 1);
+    best.stumbleT = 2.0;
+    G.punches++;
+    G.manners = Math.max(0, G.manners - 10); updateMannersPill();
+    popup('殴った！', 'bad');
+    if ((best.photo > 0 || best.isPhotog) && G.phase === 'run'){
+      const pg = NPCS.find(n => n.isPhotog && n.photo > 0);
+      if (pg) doFlash(pg);
+      G.endKind = 'flame'; G.phase = 'dead'; G.deadT = 0;
+      $('punchBtn').style.display = 'none';
+      $('dashBtn').style.display = 'none';
+      G.dashHeld = false;
+      $('stickL').style.display = 'none';
+    } else if (G.punches >= 10 && G.phase === 'run'){
+      G.endKind = 'report'; G.phase = 'dead'; G.deadT = 0;
+      $('punchBtn').style.display = 'none';
+  $('dashBtn').style.display = 'none';
+  G.dashHeld = false;
+      $('dashBtn').style.display = 'none';
+      $('stickL').style.display = 'none';
+    }
+  }
+}
+$('punchBtn').addEventListener('pointerdown', e => { e.preventDefault(); punch(); });
+const dashBtnEl = $('dashBtn');
+dashBtnEl.addEventListener('pointerdown', e => { e.preventDefault(); try{ dashBtnEl.setPointerCapture(e.pointerId); }catch(_){} G.dashHeld = true; dashBtnEl.classList.add('on'); });
+for (const ev of ['pointerup', 'pointercancel']) dashBtnEl.addEventListener(ev, () => { G.dashHeld = false; dashBtnEl.classList.remove('on'); });
+addEventListener('keydown', e => { if (e.code === 'Space'){ e.preventDefault(); punch(); } });
+
+/* ================= 参拝（二礼四拍手一礼は表示しない。覚えているかだけ） ================= */
+function prayTap(kind){
+  if (G.phase !== 'pray') return;
+  if (kind === '礼'){ P.bowT = 0.55; sndBow(); } else { P.clapT = 0.3; sndClap(); }
+  if (PRAY_SEQ[G.prayIdx] !== kind) G.prayMiss++;
+  G.prayIdx++;
+  if (G.prayIdx >= PRAY_SEQ.length) finishPray();
+}
+$('bowBtn').addEventListener('click', ()=> prayTap('礼'));
+$('clapBtn').addEventListener('click', ()=> prayTap('拍'));
+function startPray(){
+  G.phase = 'pray';
+  $('prayUI').style.display = 'flex';
+  $('stickL').style.display = 'none';
+  $('punchBtn').style.display = 'none';
+  $('dashBtn').style.display = 'none';
+  G.dashHeld = false;
+}
+function finishPray(){
+  $('prayUI').style.display = 'none';
+  if (G.manners === 100 && G.prayMiss === 0){
+    G.endKind = 'god'; G.phase = 'god'; G.godT = 0;
+    GOD.grp.visible = true;
+    tone(1568, 1.6, 'sine', 0.10); tone(2093, 2.0, 'sine', 0.07); tone(1046, 2.4, 'sine', 0.06);
+    return;
+  }
+  G.phase = 'done';
+  sndGoal();
+  setTimeout(showResult, 700);
+}
+
+/* ================= メインループ ================= */
+const clock = new THREE.Clock();
+let titleAngle = 0;
+function animate(){
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t = clock.elapsedTime;
+  applySky();
+
+  if (G.phase === 'title'){
+    titleAngle += dt * 0.02;
+    const cx = 21 + Math.sin(titleAngle) * 1.5;
+    camera.position.set(cx, groundY(0) + 6.0, 30);
+    camera.lookAt(-2, groundY(-18) + 2.5, -18);
+    player.position.set(0, groundY(13), 13);
+    player.rotation.y = Math.PI;
+    player.rotation.x = 0;
+  } else if (G.phase === 'intro'){
+    G.introT += dt;
+    const k = 1 - Math.pow(0.02, dt);
+    camera.position.x = lerp(camera.position.x, P.x * 0.82, k);
+    camera.position.y = lerp(camera.position.y, groundY(P.z) + 3.6, k);
+    camera.position.z = lerp(camera.position.z, P.z + 8.4, k);
+    camera.lookAt(P.x * 0.9, groundY(P.z) + 1.5, P.z - 4);
+    player.position.set(P.x, groundY(P.z), P.z);
+    player.rotation.y = 0;
+    if (G.introT >= 1.5){
+      G.phase = 'run';
+      const sp = $('startPop');
+      sp.style.display = 'block';
+      sp.style.animation = 'none'; void sp.offsetWidth; sp.style.animation = '';
+      setTimeout(()=> sp.style.display = 'none', 1250);
+    }
+  } else if (G.phase === 'run' || G.phase === 'pray' || G.phase === 'done' || G.phase === 'dead' || G.phase === 'god'){
+    if (G.phase === 'run'){
+      G.time += dt;
+      $('timePill').textContent = G.time.toFixed(1) + '秒';
+      G.clockMin = Math.min(1140, 960 + G.time * 1.5); // 実120秒で16:00→19:00（空だけ夜へ、時刻表示なし）
+      if (G.time >= 120){
+        G.endKind = 'gate'; G.phase = 'dead'; G.deadT = 0;
+        $('punchBtn').style.display = 'none';
+        $('dashBtn').style.display = 'none';
+        G.dashHeld = false;
+        $('stickL').style.display = 'none';
+      }
+      // 入力ベクトル（画面上が北＝-z）
+      let ix = 0, iz = 0;
+      if (stick.active){ ix = stick.dx; iz = stick.dy; }
+      if (keys['arrowleft'] || keys['a']) ix -= 1;
+      if (keys['arrowright'] || keys['d']) ix += 1;
+      if (keys['arrowup'] || keys['w']) iz -= 1;
+      if (keys['arrowdown'] || keys['s']) iz += 1;
+      const il = Math.hypot(ix, iz);
+      if (il > 1){ ix /= il; iz /= il; }
+      const mag = Math.min(1, il);
+      // ダッシュは押している間ずっと（スタミナなし）
+      if (P.dashOn){ if (!G.dashHeld || mag < 0.1) P.dashOn = false; }
+      else if (G.dashHeld && mag > 0.1) P.dashOn = true;
+      P.speedMul = lerp(P.speedMul, P.dashOn ? 1.8 : 1, 1 - Math.pow(P.dashOn ? 2e-7 : 0.001, dt));
+      const speed = 6.5 * P.speedMul * Math.max(mag, il > 0 ? 0.35 : 0);
+      const tx = ix * speed, tz = iz * speed;
+      const vRate = 1 - Math.pow(2e-7, dt);
+      P.vx = lerp(P.vx, tx, vRate);
+      P.vz = lerp(P.vz, tz, vRate);
+      P.x += P.vx * dt; P.z += P.vz * dt;
+      const w = widthAt(P.z);
+      P.x = clamp(P.x, -w, w);
+      P.z = clamp(P.z, -566.6, 14);
+      if (il > 0.08){
+        const targetA = Math.atan2(-P.vx, -P.vz);
+        let da = targetA - P.angle;
+        while (da > Math.PI) da -= Math.PI*2;
+        while (da < -Math.PI) da += Math.PI*2;
+        P.angle += da * Math.min(1, dt*14);
+      }
+      // 鳥居通過ポップ
+      for (const tp of TORII_POPUPS){
+        if (!G.toriiSeen[tp.z] && P.z < tp.z + 1 && P.z > tp.z - 6){ G.toriiSeen[tp.z] = true; }
+      }
+      // 人混みの波
+      for (const wv of WAVE_POPUPS){
+        if (!G.waveSeen[wv.z] && P.z < wv.z){ G.waveSeen[wv.z] = true; }
+      }
+      // 中央（神様の道）チェック
+      if (P.z < -376 && P.z > -563 && Math.abs(P.x) < 1.35){ // 賽銭箱の前（お参りする場所）は真ん中でもいい
+        G.centerAcc += dt;
+        if (G.warnCd <= 0){ sndWarn(); G.warnCd = 2.2; }
+        while (G.centerAcc >= 0.5){
+          G.centerAcc -= 0.5; G.centerTicks++;
+          G.manners = Math.max(0, G.manners - 1); updateMannersPill();
+        }
+      } else G.centerAcc = 0;
+      if (G.warnCd > 0) G.warnCd -= dt;
+      if (G.bumpCd > 0) G.bumpCd -= dt;
+      // ゴール判定
+      if (P.z <= -565.2 && Math.abs(P.x) < 5) startPray();
+      // HUD
+
+      const zn = zoneName(P.z);
+      if (zn !== G.zone){ G.zone = zn; $('zonePill').textContent = zn; }
+    }
+    // 事故の吹っ飛び
+    if (G.phase === 'dead'){
+      G.deadT += dt;
+      P.x += P.kbx * dt; P.z += P.kbz * dt;
+      P.kbx *= Math.pow(0.08, dt); P.kbz *= Math.pow(0.08, dt);
+      if (P.flyY > 0 || P.flyV > 0){
+        P.flyV -= 22 * dt; P.flyY += P.flyV * dt; P.flyRot += P.spin * dt;
+        if (P.flyY <= 0){ P.flyY = 0; P.flyV = 0; if (G.phase === 'dead') P.flyRot = Math.PI / 2 + Math.round((P.flyRot - Math.PI / 2) / Math.PI) * Math.PI; }
+      }
+      if (G.deadT > (G.endKind === 'bachi' ? 2.7 : 1.6)) showResult(true);
+    }
+    // 神様降臨（特別エンド演出）
+    if (G.phase === 'god'){
+      G.godT += dt;
+      const gt = Math.min(1, G.godT / 2.6);
+      GOD.grp.position.y = groundY(-570.5) + (1 - gt) * 4.2;
+      GOD.light.intensity = gt * 2.4;
+      GOD.glow.material.opacity = 0.2 + gt * 0.6;
+      if (P.bowT <= 0) P.bowT = 0.55;
+      if (G.godT > 3.4){ G.phase = 'done'; sndGoal(); showResult(false); }
+    }
+    // プレイヤー描画
+    const gy = groundY(P.z);
+    player.position.set(P.x, gy + (P.clapT > 0 ? Math.abs(Math.sin(P.clapT*20))*0.05 : 0), P.z);
+    if (G.phase === 'pray' || G.phase === 'done' || G.phase === 'god'){
+      player.rotation.y = 0; // 拝殿（北）を向く
+      if (P.bowT > 0){ P.bowT -= dt; player.rotation.x = -Math.sin(Math.min(1, (0.55-P.bowT)/0.55) * Math.PI) * 0.55; }
+      else player.rotation.x = 0;
+      if (P.clapT > 0) P.clapT -= dt;
+    } else {
+      player.rotation.y = P.angle;
+      const spd = Math.hypot(P.vx, P.vz);
+      P.phase += dt * Math.min(0.8 + spd * 0.42, 5.6);
+      const ph = P.phase;
+      swingLimbs(player, ph, clamp(spd/8, 0, 1.15) * 0.55);
+      player.rotation.x = -clamp(spd * 0.013, 0, 0.17); // 走りの前傾
+      player.position.y = gy + Math.abs(Math.sin(ph)) * 0.045 * clamp(spd/7,0,1.2);
+      if (P.punchT > 0){
+        P.punchT -= dt;
+        const pp = 1 - Math.max(0, P.punchT) / 0.28;
+        const ext = pp < 0.22 ? pp / 0.22 : (pp < 0.55 ? 1 : 1 - (pp - 0.55) / 0.45);
+        player.userData.parts.armR.rotation.x = 1.55 * ext;
+        player.rotation.y += 0.22 * ext;
+        player.rotation.x -= 0.10 * ext;
+      }
+      if (P.punchCd > 0) P.punchCd -= dt;
+      if (G.phase === 'dead'){ player.position.y = gy + P.flyY; player.rotation.x = P.flyRot; }
+    }
+    // カメラ
+    const back = (G.phase === 'run' || G.phase === 'dead') ? 8.4 : 4.8;
+    const camTX = P.x * 0.82, camTZ = P.z + back;
+    camera.position.x = lerp(camera.position.x, camTX, 1 - Math.pow(0.001, dt));
+    camera.position.z = lerp(camera.position.z, camTZ, 1 - Math.pow(0.001, dt));
+    camera.position.y = lerp(camera.position.y, groundY(P.z) + ((G.phase === 'run' || G.phase === 'dead') ? 3.6 : 2.9), 1 - Math.pow(0.001, dt));
+    camera.lookAt(P.x * 0.9, groundY(P.z) + ((G.phase === 'run' || G.phase === 'dead') ? 1.5 : 2.1), P.z - 4);
+  }
+
+  // 写真撮影グループの出現管理
+  if (G.phase === 'run'){
+    G.photoCd -= dt;
+    if (G.photoCd <= 0){
+      G.photoCd = rnd(5, 9);
+      if (!NPCS.some(n => n.photo > 0)){
+        const spot = PHOTO_SPOTS.find(s => s.z < P.z - 16 && s.z > P.z - 80);
+        if (spot) formPhotoGroup(spot);
+      }
+    }
+  }
+  // 人混み更新（タイトルでも流す）
+  for (const n of NPCS){
+    if (G.phase !== 'title' && n.photo <= 0 && (n.z > P.z + 20 || (n.dir < 0 && n.z < -565) || n.z < P.z - 110)) spawnNPC(n, false);
+    if (G.phase === 'title' && n.z > 14) n.z = -100 + rnd(0, 12);
+    if (G.phase === 'title' && n.z < -566) n.z = 10;
+    if (n.photo > 0){
+      n.photo -= dt;
+      n.z += n.kbz * dt;
+      if (n.isPhotog){
+        n.flashCd -= dt;
+        if (n.flashCd <= 0){ doFlash(n); n.flashCd = rnd(1.6, 3.2); }
+      }
+      if (n.photo <= 0) endPhoto(n);
+    } else {
+      n.z += n.dir * n.speed * dt * (G.phase === 'title' ? 0.7 : 1) + n.kbz * dt;
+    }
+    // 近づくと人が少しよけてくれる（人の壁で完全停止しない）
+    if (G.phase === 'run' && n.photo <= 0 && n.flyY <= 0 && n.tipT <= 0){
+      const pdx = n.x - P.x, pdz = n.z - P.z, pd2 = pdx*pdx + pdz*pdz;
+      if (pd2 < 2.6 && pd2 > 0.001){
+        const pd = Math.sqrt(pd2);
+        const partMul = n.z < -376 ? 1.7 : 1;
+        n.kbx += (pdx / pd) * 4.4 * partMul * dt;
+        n.kbz += (pdz / pd) * 1.1 * dt;
+      }
+    }
+    n.laneX += n.kbx * dt;
+    n.kbx *= Math.pow(0.08, dt); n.kbz *= Math.pow(0.08, dt);
+    n.laneX = clamp(n.laneX, -7.4, 7.4);
+    n.z = clamp(n.z, -570, 16);
+    n.x = n.laneX + Math.sin(t*0.9 + n.phase) * 0.28;
+    const gy = groundY(n.z);
+    let rock = Math.sin(t*5.2 + n.phase) * 0.045;
+    if (n.stumbleT > 0){ n.stumbleT -= dt; rock = Math.sin(n.stumbleT*30) * 0.22; }
+    // 吹っ飛び（放物線＋回転）
+    let tipX = 0;
+    if (n.flyY > 0 || n.flyV > 0){
+      n.flyV -= 22 * dt;
+      n.flyY += n.flyV * dt;
+      n.flyRot += n.spin * dt;
+      tipX = n.flyRot;
+      if (n.flyY <= 0){ n.flyY = 0; n.flyV = 0; n.flyRot = 0; n.tipT = 0.9; }
+    } else if (n.tipT > 0){
+      n.tipT -= dt; tipX = Math.sin(Math.min(1, (0.9 - n.tipT) / 0.9) * Math.PI) * 1.15;
+    }
+    n.grp.position.set(n.x, gy + Math.abs(Math.sin(t*5.2 + n.phase)) * 0.04 + n.flyY, n.z);
+    if (n.photo > 0 && n.flyY <= 0){
+      // 撮影中ポーズ（カメラマンは腕を上げて構える）
+      const p = n.grp.userData.parts;
+      p.legL.rotation.x = 0; p.legR.rotation.x = 0; p.armL.rotation.x = 0;
+      p.armR.rotation.x = n.isPhotog ? 2.35 : (n.poseArm ? 2.8 : 0);
+      n.grp.rotation.set(tipX, n.photoRy, 0);
+    } else {
+      const lean = (n.runner && n.flyY <= 0 && n.tipT <= 0) ? (n.dir > 0 ? 0.13 : -0.13) : 0;
+      n.grp.rotation.set(tipX + lean, n.dir > 0 ? Math.PI : 0, rock);
+      if (n.runner) swingLimbs(n.grp, t * Math.min(1.2 + n.speed * 0.5, 7.0) + n.phase, 0.9);
+      else swingLimbs(n.grp, t*3.1 + n.phase, 0.32);
+    }
+    // 接触判定
+    if (G.phase === 'run' && G.bumpCd <= 0){
+      const dx = n.x - P.x, dz = n.z - P.z;
+      if (dx*dx + dz*dz < 0.42){
+        G.bumpCd = 0.7; G.bumps++;
+        if (P.dashOn){
+          G.dashBumps++;
+          if (G.dashBumps >= 5){
+            G.endKind = 'fall'; G.phase = 'dead'; G.deadT = 0;
+            P.flyV = 7; P.flyY = 0.02; P.flyRot = 0; P.spin = rnd(6, 9);
+            P.kbx = P.vx * 0.6; P.kbz = P.vz * 0.6;
+            $('punchBtn').style.display = 'none';
+            $('dashBtn').style.display = 'none';
+            G.dashHeld = false;
+            $('stickL').style.display = 'none';
+          }
+        }
+        G.manners = Math.max(0, G.manners - 4); updateMannersPill();
+        n.stumbleT = 0.55;
+        P.vx *= 0.55; P.vz *= 0.55;
+        popup('ぶつかった！', 'bad'); sndBump();
+      }
+    }
+  }
+  updateCrossCars(dt);
+  updateToriis(dt);
+  updateShops(dt);
+  if (G.boltT > 0){
+    const prevBoltT = G.boltT;
+    G.boltT -= dt;
+    boltGrp.visible = (2.2 - G.boltT) < 0.5 || Math.random() > 0.22; // 最初はしっかり、後はちらつき
+    if (prevBoltT > 1.6 && G.boltT <= 1.6){ // 二度目の落雷
+      G.flashT = 0.5;
+      boltGrp.rotation.y = rnd(0, 6.28); boltGrp.scale.x = rnd(0.8, 1.35);
+      noiseBurst(0.4, 200, 0.3); tone(48, 0.7, 'sine', 0.26, -12);
+    }
+    if (sparks.visible){
+      const pos = sparkGeo.attributes.position.array;
+      for (let i = 0; i < 14; i++){
+        sparkVel[i][1] -= 9 * dt;
+        pos[i*3] += sparkVel[i][0] * dt; pos[i*3+1] += sparkVel[i][1] * dt; pos[i*3+2] += sparkVel[i][2] * dt;
+      }
+      sparkGeo.attributes.position.needsUpdate = true;
+      sparkMat.opacity = Math.max(0, Math.min(1, G.boltT));
+      if (G.boltT <= 0.9) sparks.visible = false;
+    }
+    if (G.boltT <= 0){ boltGrp.visible = false; sparks.visible = false; }
+  }
+  if (G.flashT > 0){ G.flashT -= dt; $('flash').style.opacity = Math.max(0, Math.min(1, G.flashT * 2.4)); if (G.flashT <= 0) $('flash').style.opacity = 0; }
+  if (flashT > 0){
+    flashT -= dt;
+    flashMesh.material.opacity = Math.max(0, flashT / 0.16) * 0.85;
+    flashMesh.scale.setScalar(1 + (0.16 - Math.max(0, flashT)) * 3);
+    if (flashT <= 0) flashMesh.visible = false;
+  }
+  renderer.render(scene, camera);
+}
+function updateMannersPill(){ /* 礼儀の数は表示しない（内部計算のみ） */ }
+animate();
+
+/* ================= 名前・NGフィルター ================= */
+const NG_WORDS = ["ちんこ","チンコ","ちんぽ","チンポ","ちんちん","チンチン","ちんかす","まんこ","マンコ","おまんこ","まんかす","きんたま","キンタマ","金玉","たまきん","くりとりす","クリトリス","陰核","いんかく","ペニス","ぺにす","陰茎","いんけい","膣","肛門","こうもん","アナル","あなる","セックス","せっくす","エロ","えろ","オナニー","おなにー","自慰","射精","しゃせい","精液","せいえき","精子","フェラ","ふぇら","パイズリ","ぱいずり","手コキ","てこき","中出し","なかだし","潮吹き","しおふき","勃起","ぼっき","淫乱","いんらん","淫","変態","へんたい","痴漢","ちかん","レイプ","れいぷ","強姦","ごうかん","ロリ","ろり","ショタ","しょた","ふたなり","風俗","ふうぞく","ソープランド","そーぷ","愛液","あいえき","巨乳","きょにゅう","おっぱい","オッパイ","乳首","ちくび","処女","しょじょ","童貞","どうてい","ヤリマン","やりまん","ビッチ","びっち","売春","ばいしゅん","援交","えんこう","パパ活","ぱぱかつ","うんこ","ウンコ","くそったれ","クソッタレ","死ね","しね","fuck","shit","dick","cock","pussy","bitch","porn","sex","anal","cum","tits","boobs","penis","vagina","hentai","whore","slut","nigger"];
+function cleanName(raw){
+  let name = (raw || '').trim().slice(0, 10);
+  if (!name) return 'NONAME';
+  const lower = name.toLowerCase();
+  for (const w of NG_WORDS){
+    if (lower.includes(w.toLowerCase())){
+      // 直接ヒットはマスク、区切り回避などは差し替え
+      if (name.includes(w)) return name.split(w).join('＊'.repeat(w.length)).slice(0,10);
+      return 'NONAME';
+    }
+  }
+  return name;
+}
+function storeGet(k){ try { return localStorage.getItem(k); } catch(e){ const m = document.cookie.match(new RegExp(k+'=([^;]+)')); return m ? decodeURIComponent(m[1]) : null; } }
+function storeSet(k, v){ try { localStorage.setItem(k, v); } catch(e){} try { document.cookie = k + '=' + encodeURIComponent(v) + '; max-age=31536000; path=/'; } catch(e){} }
+function playerId(){
+  let pid = storeGet('izumo_pid');
+  if (!pid){ pid = 'p' + Math.random().toString(36).slice(2, 10); storeSet('izumo_pid', pid); }
+  return pid;
+}
+function myName(){ return cleanName($('nameInput').value || storeGet('izumo_name') || ''); }
+
+/* ================= ランキング ================= */
+const RANK_FORM_ID = '1FAIpQLScrW0I2Zry7vuZAQ374Mi8EgLplqQa2ri1xENAVnOI5dGMkoQ';
+const RANK_ENT = { name: 'entry.680218097', score: 'entry.904420742', pid: 'entry.1374419805', date: 'entry.1270070723' };
+const RANK_SHEET_ID = '1JeIK9cr-TNmF3eokfHcgfxFSVhosfwlWi9E_ySwj3wI';
+function formPost(score){
+  if (RANK_FORM_ID === 'PENDING') return;
+  try {
+    const body = new URLSearchParams();
+    body.append(RANK_ENT.name, myName());
+    body.append(RANK_ENT.score, String(score));
+    body.append(RANK_ENT.pid, playerId());
+    body.append(RANK_ENT.date, new Date().toISOString());
+    fetch('https://docs.google.com/forms/d/e/' + RANK_FORM_ID + '/formResponse', { method: 'POST', mode: 'no-cors', body, keepalive: true });
+  } catch(e){}
+}
+async function loadRanking(el){
+  if (RANK_SHEET_ID === 'PENDING') { el.textContent = '準備中…'; return; }
+  el.textContent = '読み込み中…';
+  try {
+    const res = await fetch('https://docs.google.com/spreadsheets/d/' + RANK_SHEET_ID + '/gviz/tq?tqx=out:json&headers=1&_=' + Date.now());
+    const txt = await res.text();
+    const json = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+    const rows = json.table.rows || [];
+    const best = new Map();
+    for (const r of rows){
+      const c = r.c || [];
+      const name = c[1] && c[1].v != null ? String(c[1].v) : 'NONAME';
+      const score = c[2] && c[2].v != null ? Number(c[2].v) : NaN;
+      const pid = c[3] && c[3].v != null ? String(c[3].v) : '';
+      if (!pid || isNaN(score)) continue;
+      // 新形式のみ：上位=おみくじ順位（0神吉…6凶）、下6桁=タイム(0.1秒)。おみくじ以外のエンドと旧形式は載せない
+      const rk = Math.floor(score / 1000000), tt = score % 1000000;
+      if (score < 0 || rk > 6 || tt > 1200) continue;
+      if (!best.has(pid) || score < best.get(pid).score) best.set(pid, { name, score, pid });
+    }
+    const list = [...best.values()].sort((a,b)=> a.score - b.score).slice(0, 20);
+    const mypid = playerId();
+    const myBestScore = Number(storeGet('izumo_best2') || -1);
+    const mineE = best.get(mypid);
+    if (myBestScore >= 0 && (!mineE || mineE.score > myBestScore)) formPost(myBestScore); // 送信ロスト時の再送（シート照合）
+    if (!list.length){ el.textContent = 'まだ記録がありません'; return; }
+    const RANK_LABEL = ['神吉','大吉','吉','中吉','小吉','末吉','凶'];
+    el.innerHTML = list.map((r, i)=>{
+      const rk = Math.floor(r.score / 1000000), tt = r.score % 1000000;
+      return `<div class="${r.pid === mypid ? 'me' : ''}">${i+1}位　${r.name}　${RANK_LABEL[rk]}　${(tt / 10).toFixed(1)}秒</div>`;
+    }).join('');
+  } catch(e){ el.textContent = '読み込みに失敗しました'; }
+}
+
+/* ================= リザルト ================= */
+const TIERS = [
+  { min:100, omikuji:'大吉', title:'神様もにっこり', comment:'一歩もぶつからず、作法も完璧な参拝でした。', comments:['一歩もぶつからず、作法も完璧な参拝でした。', '我ながら完璧な参拝だった。', '神様も思わずうなずく参拝でした。'] },
+  { min:90,  omikuji:'大吉', title:'清々しい参拝', comment:'清らかな気持ちでお参りできました。', comments:['清らかな気持ちでお参りできました。', '気持ちのいい初詣になりました。', 'すがすがしい年の始まりです。'] },
+  { min:80,  omikuji:'吉',   title:'なかなかの参拝', comment:'落ち着いた、良いお参りでした。', comments:['落ち着いた、良いお参りでした。', '穏やかに参拝できました。', '良い一年になりそうです。'] },
+  { min:65,  omikuji:'中吉', title:'まあまあの参拝', comment:'少しバタバタしたけれど、無事到着。', comments:['少しバタバタしたけれど、無事到着。', 'ちょっと騒がしかったけど、まあ無事に。', 'ドタバタしつつも、ちゃんとお参り。'] },
+  { min:50,  omikuji:'小吉', title:'少し騒がしい参拝', comment:'神様が少しだけ顔をしかめたかも。', comments:['神様が少しだけ顔をしかめたかも。', 'もう少し落ち着きたかったところ。', '神様がちらっとこちらを見た。'] },
+  { min:30,  omikuji:'末吉', title:'神様が苦笑い', comment:'もう少し静かにお参りしましょう。', comments:['もう少し静かにお参りしましょう。', '次はもう少し丁寧にいきましょう。', '神様が苦笑いしながら見ていた。'] },
+  { min:0,   omikuji:'凶',   title:'神様がそっぽを向いた', comment:'これは…来年また出直してきてください。', comments:['これは…来年また出直してきてください。', '神様が完全にそっぽを向いた。', '神様に愛想を尽かされた気がする。'] },
+];
+let lastResult = null;
+function tierFor(m){ return TIERS.find(t => m >= t.min); }
+function showResult(death){
+  if (G.resultShown) return;
+  G.resultShown = true;
+  let tier = G.endKind === 'god' ? { omikuji:'神吉', title:'神様が現れた', comment:'清らかな参拝だった', comments:['清らかな参拝だった', '神様と目が合った気がした', 'これ以上ないお参りだった'] }
+    : G.endKind === 'report' ? { omikuji:'通報', title:'現行犯逮捕', comment:'殴りすぎた', comments:['殴りすぎた', '僕の手は赤く染まっていた', '気づいたら全員敵だった'] }
+    : G.endKind === 'flame' ? { omikuji:'炎上', title:'拡散された', comment:'撮影中の人を殴ってしまった', comments:['撮影中の人を殴ってしまった', '僕の初詣はネットに残り続ける', 'バズりたくなかった'] }
+    : G.endKind === 'gate' ? { omikuji:'閉門', title:'間に合わなかった', comment:'出雲大社は19時まで', comments:['出雲大社は19時まで', '門の前で立ち尽くした', 'あと少しだったのに'] }
+    : G.endKind === 'saisen' ? { omikuji:'賽銭泥棒', title:'捕まった', comment:'賽銭箱を殴ってしまった', comments:['賽銭箱を殴ってしまった', 'お賽銭は入れるものだった', '神様の前でやらかした'] }
+    : G.endKind === 'fall' ? { omikuji:'転倒', title:'大怪我した', comment:'人混みで転んでしまった', comments:['人混みで転んでしまった', 'ダッシュのしすぎだった', '参拝客の視線が痛い'] }
+    : G.endKind === 'shop' ? { omikuji:'建造物損害罪', title:'店を壊した', comment:'店の壁を壊してしまった', comments:['店の壁を壊してしまった', '弁償では済まなかった', '店の扉が開かなかったんだ'] }
+    : G.endKind === 'bachi' ? { omikuji:'バチ当たり', title:'雷に打たれた', comment:'鳥居を殴りすぎた', comments:['鳥居を殴りすぎた', '空が光った気がした', '神様は見ていた'] }
+    : death ? { omikuji:'事故', title:'車にはねられた', comment:'初詣どころじゃなかった', comments:['初詣どころじゃなかった', '気づいたら空を飛んでいた', '今年の運を使い果たした'] } : tierFor(G.manners);
+  if (!death && !G.endKind && G.prayMiss > 0) tier = TIERS[Math.min(TIERS.indexOf(tier) + 1, TIERS.length - 1)];
+  if (tier.comments) tier = { ...tier, comment: tier.comments[Math.floor(Math.random() * tier.comments.length)] };
+  const OMIKUJI_RANK = { '神吉':0, '大吉':1, '吉':2, '中吉':3, '小吉':4, '末吉':5, '凶':6 };
+  const rank = OMIKUJI_RANK[tier.omikuji]; // おみくじ以外のエンドはランキング対象外
+  const score = rank !== undefined ? rank * 1000000 + Math.round(G.time * 10) : null;
+  lastResult = { tier, manners: G.manners, time: G.time, bumps: G.bumps, punches: G.punches, death: !!death, centerSec: (G.centerTicks * 0.5).toFixed(1), score };
+  $('omikuji').textContent = tier.omikuji;
+  $('omikuji').style.fontSize = tier.omikuji.length >= 6 ? 'clamp(32px, 10vw, 44px)' : '';
+  $('resTitle').textContent = tier.title;
+  $('resTitle').style.display = tier.title ? '' : 'none';
+  $('resComment').textContent = tier.comment;
+  $('resTime').textContent = G.time.toFixed(1) + '秒';
+  $('resBumps').textContent = G.bumps + '回';
+  $('resPunch').textContent = G.punches + '回';
+  $('resTorii').textContent = G.toriiPunches + '回';
+  $('resCenter').textContent = lastResult.centerSec + '秒';
+  $('resPray').textContent = death ? '参拝できなかった' : (G.prayMiss > 0 ? '間違っていた' : '合っていた');
+  if (score !== null){
+    const prevBest = Number(storeGet('izumo_best2') || -1);
+    if (prevBest < 0 || score < prevBest){ storeSet('izumo_best2', String(score)); storeSet('izumo_best2_txt', `${G.time.toFixed(1)}秒（${tier.omikuji}）`); }
+    formPost(score);
+  }
+  const isOmikuji = rank !== undefined;
+  const shareText = `『出雲大社 初詣』\n${isOmikuji ? 'おみくじは' : ''}${tier.omikuji}！「${tier.title}」${G.time.toFixed(1)}秒\n#出雲大社初詣 #ブラウザゲーム #インディーゲーム #個人開発 #gamedev`;
+  $('shareBtn').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText);
+  $('resultScr').style.display = 'flex';
+  updateBestLine();
+}
+function updateBestLine(){
+  const b = storeGet('izumo_best2_txt');
+  $('bestLine').textContent = b ? '自己ベスト： ' + b : '';
+}
+/* 画像付き共有（標準仕様：スクエア合成、未対応環境ではテキスト共有へ） */
+function buildShareImage(){
+  const S = 1080, cv = document.createElement('canvas'); cv.width = S; cv.height = S;
+  const g = cv.getContext('2d');
+  const src = renderer.domElement;
+  const scale = Math.max(S / src.width, S / src.height);
+  const dw = src.width * scale, dh = src.height * scale;
+  g.drawImage(src, (S - dw)/2, (S - dh)/2, dw, dh);
+  const grad = g.createLinearGradient(0, S*0.52, 0, S);
+  grad.addColorStop(0, 'rgba(10,10,20,0)'); grad.addColorStop(0.45, 'rgba(10,10,20,0.88)');
+  g.fillStyle = grad; g.fillRect(0, S*0.52, S, S*0.48);
+  g.textAlign = 'center'; g.fillStyle = '#fff';
+  g.font = '900 64px sans-serif';
+  g.fillText('⛩️ 出雲大社 初詣', S/2, S*0.70);
+  if (lastResult){
+    g.font = '900 120px sans-serif'; g.fillStyle = '#ffd94d';
+    g.fillText((lastResult.score !== null && lastResult.score !== undefined ? 'おみくじ ' : '') + lastResult.tier.omikuji, S/2, S*0.83);
+    g.font = '700 52px sans-serif'; g.fillStyle = '#fff';
+    g.fillText(`「${lastResult.tier.title}」 ${lastResult.time.toFixed(1)}秒`, S/2, S*0.92);
+  }
+  return cv;
+}
+$('imgShareBtn').addEventListener('click', ()=>{
+  const shareText = $('shareBtn').href;
+  try {
+    const cv = buildShareImage();
+    cv.toBlob(async blob => {
+      const file = new File([blob], 'izumo.png', { type:'image/png' });
+      if (navigator.canShare && navigator.canShare({ files:[file] })){
+        try { await navigator.share({ files:[file], text: decodeURIComponent(shareText.split('text=')[1] || '') }); return; } catch(e){}
+      }
+      window.open(shareText, '_blank');
+    });
+  } catch(e){ window.open(shareText, '_blank'); }
+});
+
+/* ================= 画面遷移 ================= */
+function startGame(){
+  ac(); startAmb();
+  storeSet('izumo_name', $('nameInput').value.trim());
+  G.phase = 'intro'; G.introT = 0; G.time = 0; G.clockMin = 960; G.manners = 100; G.bumps = 0; G.dashBumps = 0; G.resultShown = false; G.punches = 0; G.toriiPunches = 0; G.centerTicks = 0; G.centerAcc = 0;
+  if (saisenMesh){ saisenMesh.rotation.z = 0; saisenMesh.rotation.x = 0; }
+  for (const s of SHOPS){ s.hits = 0; s.broken = false; s.shakeT = 0; s.grp.rotation.z = 0; s.grp.position.y = groundY(s.z); }
+  G.bumpCd = 0; G.warnCd = 0; G.prayIdx = 0; G.prayMiss = 0; G.toriiSeen = {}; G.waveSeen = {}; G.zone = '';
+  G.endKind = null; G.godT = 0; G.dashHeld = false; dashBtnEl.classList.remove('on');
+  GOD.grp.visible = false; GOD.light.intensity = 0; GOD.glow.material.opacity = 0;
+  P.x = 0; P.z = 13; P.vx = 0; P.vz = 0; P.angle = 0; P.stamina = 100; P.bowT = 0; P.clapT = 0; P.punchT = 0; P.punchCd = 0;
+  P.kbx = 0; P.kbz = 0; P.flyY = 0; P.flyV = 0; P.flyRot = 0; G.deadT = 0;
+  P.dashOn = false; P.speedMul = 1; P.magSm = 0;
+  $('punchBtn').style.display = 'block';
+  $('dashBtn').style.display = 'block';
+  for (const n of NPCS) spawnNPC(n, true);
+  camera.position.set(21, groundY(13) + 6.0, 34);
+  $('titleScr').style.display = 'none';
+  $('resultScr').style.display = 'none';
+  $('rankScr').style.display = 'none';
+  $('hud').style.display = 'flex';
+  $('zonePill').textContent = '神門通り';
+  $('timePill').textContent = '0.0秒';
+  updateMannersPill();
+}
+function toTitle(){
+  G.phase = 'title';
+  $('hud').style.display = 'none';
+  $('punchBtn').style.display = 'none';
+  $('dashBtn').style.display = 'none';
+  G.dashHeld = false;
+  stopAmb();
+  $('prayUI').style.display = 'none';
+  $('resultScr').style.display = 'none';
+  $('rankScr').style.display = 'none';
+  $('titleScr').style.display = 'flex';
+  updateBestLine();
+}
+$('startBtn').addEventListener('click', startGame);
+$('againBtn').addEventListener('click', startGame);
+$('toTitleBtn').addEventListener('click', toTitle);
+$('quitBtn').addEventListener('click', toTitle);
+$('rankBtn').addEventListener('click', ()=>{ $('titleScr').style.display = 'none'; $('rankScr').style.display = 'flex'; loadRanking($('rankList')); });
+$('rankBackBtn').addEventListener('click', toTitle);
+$('nameInput').value = storeGet('izumo_name') || '';
+$('nameInput').addEventListener('change', ()=> storeSet('izumo_name', $('nameInput').value.trim()));
+updateBestLine();
+if (new URLSearchParams(location.search).has('dbg')) window.__G = { G, P, NPCS, SHOPS, boltGrp, CROSS_CARS, TORIIS, PHOTO_SPOTS, formPhotoGroup, player, scene, startGame, startPray, prayTap, punch, showResult, groundY,
+  acState: () => AC ? AC.state : 'none', bgmOn: () => !!ambNodes,
+  armVec: () => { const p = player.userData.parts; const v = new THREE.Vector3(), s = new THREE.Vector3();
+    p.armR.children[1].getWorldPosition(v); p.armR.getWorldPosition(s);
+    return { rotX: +p.armR.rotation.x.toFixed(2), dx: +(v.x - s.x).toFixed(2), dy: +(v.y - s.y).toFixed(2), dz: +(v.z - s.z).toFixed(2) }; } };
+</script>
+</body>
+</html>
