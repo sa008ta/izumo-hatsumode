@@ -1643,6 +1643,7 @@ function buildShareImage(){
   const camPos = camera.position.clone();
   let hitCar = null, hitCarX = 0;
   let staged = null; // flame re-enactment: NPCs re-posed for the shot, restored after
+  let stagedPlayer = false; // pillar photo: player shifted clear of a torii pillar for the shot, restored after
   if (G.endKind === 'flame' && G.flameSpot){
     const spot = G.flameSpot, gy = groundY(spot.z);
     staged = [];
@@ -1671,26 +1672,37 @@ function buildShareImage(){
       camera.position.set(tx + 3.2, groundY(tz) + 4.6, tz + 11.0); // wider: both the player and the car have to fit
       camera.lookAt(tx, groundY(tz) + 0.4, tz);
     } else {
-      // pick a camera side the torii pillars don't block — a pillar on the sight line hides the player completely (bachi at a pillar was invisible)
-      const gyT = groundY(tz);
-      let nearPillar = 1e9;
-      for (const t of TORIIS) for (const px of [t.w / 2, -t.w / 2]) nearPillar = Math.min(nearPillar, Math.hypot(px - tx, t.z - tz));
-      const cands = [[4.4, 7.8, 3.6], [-4.4, 7.8, 3.6], [4.4, -7.8, 3.6], [-4.4, -7.8, 3.6], [0, 10.5, 6.2], [0, -10.5, 6.2]];
-      let bestC = cands[0], bestClear = -1;
-      if (nearPillar >= 1.7) for (const c of cands){
-        const cx = tx + c[0], cz = tz + c[1];
-        let clear = 1e9;
-        for (const t of TORIIS) for (const px of [t.w / 2, -t.w / 2]){
-          const vx = tx - cx, vz = tz - cz, wx = px - cx, wz = t.z - cz;
-          const tt = Math.max(0, Math.min(1, (wx * vx + wz * vz) / ((vx * vx + vz * vz) || 1)));
-          clear = Math.min(clear, Math.hypot(px - (cx + vx * tt), t.z - (cz + vz * tt)));
+      // a pillar on the sight line hides the player completely (bachi at a pillar was invisible) — handle pillars explicitly
+      let nearP = null, nearD = 1e9;
+      for (const t of TORIIS) for (const px of [t.w / 2, -t.w / 2]){ const d = Math.hypot(px - tx, t.z - tz); if (d < nearD){ nearD = d; nearP = { x: px, z: t.z }; } }
+      if (nearD < 2.4){
+        // staged photo (same idea as the car/flame stagings): shift the player clear of the pillar, shoot from the open side, restore after the render
+        const dx = tx - nearP.x, dz = tz - nearP.z, dl = Math.hypot(dx, dz);
+        const ux = dl < 0.05 ? 0 : dx / dl, uz = dl < 0.05 ? 1 : dz / dl;
+        tx = nearP.x + ux * 2.7; tz = nearP.z + uz * 2.7;
+        player.position.set(tx, groundY(tz) + (P.flyY || 0), tz);
+        stagedPlayer = true;
+        const gyS = groundY(tz);
+        camera.position.set(tx + ux * 6.2 - uz * 2.3, gyS + 3.8, tz + uz * 6.2 + ux * 2.3);
+        camera.lookAt(tx, gyS + 0.4, tz);
+      } else {
+        const gyT = groundY(tz);
+        const cands = [[4.4, 7.8, 3.6], [-4.4, 7.8, 3.6], [4.4, -7.8, 3.6], [-4.4, -7.8, 3.6], [0, 10.5, 6.2], [0, -10.5, 6.2]];
+        let bestC = cands[0], bestClear = -1;
+        for (const c of cands){
+          const cx = tx + c[0], cz = tz + c[1];
+          let clear = 1e9;
+          for (const t of TORIIS) for (const px of [t.w / 2, -t.w / 2]){
+            const vx = tx - cx, vz = tz - cz, wx = px - cx, wz = t.z - cz;
+            const tt = Math.max(0, Math.min(1, (wx * vx + wz * vz) / ((vx * vx + vz * vz) || 1)));
+            clear = Math.min(clear, Math.hypot(px - (cx + vx * tt), t.z - (cz + vz * tt)));
+          }
+          if (clear > bestClear){ bestClear = clear; bestC = c; }
+          if (clear > 1.0) break;
         }
-        if (clear > bestClear){ bestClear = clear; bestC = c; }
-        if (clear > 1.0) break;
+        camera.position.set(tx + bestC[0], gyT + bestC[2], tz + bestC[1]);
+        camera.lookAt(tx, gyT + 0.4, tz);
       }
-      if (nearPillar < 1.7 || bestClear < 1.0){ bestC = [0.5, 1.5, 9.5]; } // player down at a pillar's base: no side view is reliable — go almost straight overhead, where a pillar can't cover them
-      camera.position.set(tx + bestC[0], gyT + bestC[2], tz + bestC[1]);
-      camera.lookAt(tx, gyT + 0.4, tz);
     }
     renderer.render(scene, camera);
   }
@@ -1711,6 +1723,7 @@ function buildShareImage(){
     g.fillText(`「${lastResult.tier.title}」 ${lastResult.time.toFixed(1)}秒`, S/2, S*0.92);
   }
   if (hitCar){ hitCar.x = hitCarX; hitCar.grp.position.x = hitCarX; hitCar.grp.position.y = groundY(hitCar.z); }
+  if (stagedPlayer){ player.position.set(P.x, groundY(P.z) + (P.flyY || 0), P.z); stagedPlayer = false; }
   if (staged){
     for (const s of staged){ const n = s.n; n.x = s.x; n.z = s.z; n.photo = s.photo; n.isPhotog = s.isPhotog; n.poseArm = s.poseArm; if (n.phoneMesh) n.phoneMesh.visible = s.phone; n.grp.position.set(s.gx, s.gy, s.gz); n.grp.rotation.y = s.gry; }
     flashSprite.visible = false;
