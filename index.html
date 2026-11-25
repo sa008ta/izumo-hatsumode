@@ -116,8 +116,7 @@
       <div>作法 <span id="resPray"></span></div>
     </div>
   </div>
-  <button class="btn" id="imgShareBtn" style="background:linear-gradient(180deg,#3f9e58,#2a7a42);box-shadow:0 5px 0 #1d5c2a,0 8px 18px rgba(0,0,0,.4);">📷 画像付きで共有</button>
-  <a class="btn sub" id="shareBtn" href="#" target="_blank" rel="noopener">𝕏で共有</a>
+  <button class="btn" id="shareBtn" style="background:linear-gradient(180deg,#3f9e58,#2a7a42);box-shadow:0 5px 0 #1d5c2a,0 8px 18px rgba(0,0,0,.4);">共有</button>
   <button class="btn sub" id="againBtn">もう一度</button>
   <button class="btn sub" id="toTitleBtn">タイトルへ</button>
 </div>
@@ -584,7 +583,7 @@ function updateCrossCars(dt){
   }
 }
 function hitByCar(c){
-  G.phase = 'dead'; G.deadT = 0; G.endKind = 'car';
+  G.phase = 'dead'; G.deadT = 0; G.endKind = 'car'; G.hitCar = c;
   P.vx = 0; P.vz = 0;
   P.kbx = c.dir * 13; P.kbz = rnd(-1, 1);
   P.flyV = 8; P.flyY = 0.02; P.flyRot = 0; P.spin = rnd(6, 9) * (Math.random() < 0.5 ? -1 : 1);
@@ -890,6 +889,17 @@ for (let i=0; i<44; i++){
 /* ================= 写真撮影の観光客 ================= */
 const PHOTO_SPOTS = [ { z:-60, x:1.2 }, { z:-180, x:-1.2 }, { z:-322, x:0.8 }, { z:-470, x:-1.5 } ];
 const flashMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 1.7), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }));
+// soft flash sprite for the flame share photo (the raw flash plane reads as a white rectangle in a still)
+const flashSprite = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g2 = c.getContext('2d');
+  const gr = g2.createRadialGradient(64, 64, 2, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,244,200,0.75)'); gr.addColorStop(1, 'rgba(255,244,200,0)');
+  g2.fillStyle = gr; g2.fillRect(0, 0, 128, 128);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+  sp.scale.set(1.5, 1.5, 1); sp.visible = false; scene.add(sp);
+  return sp;
+})();
 flashMesh.visible = false; scene.add(flashMesh);
 let flashT = 0;
 function doFlash(n){
@@ -1155,6 +1165,7 @@ function punch(){
     if ((best.photo > 0 || best.isPhotog) && G.phase === 'run'){
       const pg = NPCS.find(n => n.isPhotog && n.photo > 0);
       if (pg) doFlash(pg);
+      G.flameSpot = pg ? { x: pg.x, z: pg.z - 4.3 } : { x: best.x, z: best.z }; // for the share photo's re-enactment
       G.endKind = 'flame'; G.phase = 'dead'; G.deadT = 0;
       $('punchBtn').style.display = 'none';
       $('dashBtn').style.display = 'none';
@@ -1578,6 +1589,7 @@ const TIERS = [
   { min:0,   omikuji:'凶',   title:'神様がそっぽを向いた', comment:'これは…来年また出直してきてください。', comments:['これは…来年また出直してきてください。', '神様が完全にそっぽを向いた。', '神様に愛想を尽かされた気がする。'] },
 ];
 let lastResult = null;
+let shareUrl = '';
 function tierFor(m){ return TIERS.find(t => m >= t.min); }
 function showResult(death){
   if (G.resultShown) return;
@@ -1615,7 +1627,7 @@ function showResult(death){
   }
   const isOmikuji = rank !== undefined;
   const shareText = `『出雲大社 初詣』\n${isOmikuji ? 'おみくじは' : ''}${tier.omikuji}！「${tier.title}」${G.time.toFixed(1)}秒\n#出雲大社初詣 #ブラウザゲーム #インディーゲーム #個人開発 #gamedev`;
-  $('shareBtn').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText);
+  shareUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText);
   $('resultScr').style.display = 'flex';
   updateBestLine();
 }
@@ -1627,6 +1639,61 @@ function updateBestLine(){
 function buildShareImage(){
   const S = 1080, cv = document.createElement('canvas'); cv.width = S; cv.height = S;
   const g = cv.getContext('2d');
+  // stage the shot: at the result the follow camera often frames neither the player nor (for a car death) the car — frame them deliberately, then put everything back
+  const camPos = camera.position.clone();
+  let hitCar = null, hitCarX = 0;
+  let staged = null; // flame re-enactment: NPCs re-posed for the shot, restored after
+  if (G.endKind === 'flame' && G.flameSpot){
+    const spot = G.flameSpot, gy = groundY(spot.z);
+    staged = [];
+    const near = NPCS.slice().sort((a, b) => (Math.abs(a.x - spot.x) + Math.abs(a.z - spot.z)) - (Math.abs(b.x - spot.x) + Math.abs(b.z - spot.z))).slice(0, 5);
+    const offs = [[-1.3, 0], [0.2, 0.55], [1.5, -0.3], [-0.5, -0.95]];
+    near.forEach((n, i) => {
+      staged.push({ n, x: n.x, z: n.z, photo: n.photo, isPhotog: n.isPhotog, poseArm: n.poseArm, phone: n.phoneMesh ? n.phoneMesh.visible : false, gx: n.grp.position.x, gy: n.grp.position.y, gz: n.grp.position.z, gry: n.grp.rotation.y });
+      if (i < 4){ n.x = spot.x + offs[i][0]; n.z = spot.z + offs[i][1]; n.photoRy = Math.PI; n.isPhotog = false; n.poseArm = i === 1; if (n.phoneMesh) n.phoneMesh.visible = false; }
+      else { n.x = spot.x + 0.1; n.z = spot.z + 4.3; n.photoRy = 0; n.isPhotog = true; if (n.phoneMesh) n.phoneMesh.visible = true; }
+      n.grp.position.set(n.x, groundY(n.z), n.z);
+      n.grp.rotation.set(0, n.photoRy, 0);
+    });
+    flashSprite.position.set(spot.x + 0.1, gy + 1.55, spot.z + 3.8);
+    flashSprite.visible = true;
+    camera.position.set(spot.x - 3.4, gy + 3.4, spot.z + 11.5);
+    camera.lookAt(spot.x + 0.3, gy + 1.1, spot.z + 1.6);
+    renderer.render(scene, camera);
+  } else {
+    let tx = P.x, tz = P.z;
+    if (G.endKind === 'car' && G.hitCar){
+      hitCar = G.hitCar; hitCarX = hitCar.x;
+      hitCar.x = P.x + hitCar.dir * 5.2; // the car that hit the player, placed just past them for the photo
+      hitCar.grp.position.x = hitCar.x;
+      hitCar.grp.position.y = groundY(hitCar.z);
+      tx = (P.x + hitCar.x) / 2; tz = (P.z + hitCar.z) / 2;
+      camera.position.set(tx + 3.2, groundY(tz) + 4.6, tz + 11.0); // wider: both the player and the car have to fit
+      camera.lookAt(tx, groundY(tz) + 0.4, tz);
+    } else {
+      // pick a camera side the torii pillars don't block — a pillar on the sight line hides the player completely (bachi at a pillar was invisible)
+      const gyT = groundY(tz);
+      let nearPillar = 1e9;
+      for (const t of TORIIS) for (const px of [t.w / 2, -t.w / 2]) nearPillar = Math.min(nearPillar, Math.hypot(px - tx, t.z - tz));
+      const cands = [[4.4, 7.8, 3.6], [-4.4, 7.8, 3.6], [4.4, -7.8, 3.6], [-4.4, -7.8, 3.6], [0, 10.5, 6.2], [0, -10.5, 6.2]];
+      let bestC = cands[0], bestClear = -1;
+      if (nearPillar >= 1.7) for (const c of cands){
+        const cx = tx + c[0], cz = tz + c[1];
+        let clear = 1e9;
+        for (const t of TORIIS) for (const px of [t.w / 2, -t.w / 2]){
+          const vx = tx - cx, vz = tz - cz, wx = px - cx, wz = t.z - cz;
+          const tt = Math.max(0, Math.min(1, (wx * vx + wz * vz) / ((vx * vx + vz * vz) || 1)));
+          clear = Math.min(clear, Math.hypot(px - (cx + vx * tt), t.z - (cz + vz * tt)));
+        }
+        if (clear > bestClear){ bestClear = clear; bestC = c; }
+        if (clear > 1.0) break;
+      }
+      if (nearPillar < 1.7 || bestClear < 1.0){ bestC = [0.5, 1.5, 9.5]; } // player down at a pillar's base: no side view is reliable — go almost straight overhead, where a pillar can't cover them
+      camera.position.set(tx + bestC[0], gyT + bestC[2], tz + bestC[1]);
+      camera.lookAt(tx, gyT + 0.4, tz);
+    }
+    renderer.render(scene, camera);
+  }
   const src = renderer.domElement;
   const scale = Math.max(S / src.width, S / src.height);
   const dw = src.width * scale, dh = src.height * scale;
@@ -1643,10 +1710,18 @@ function buildShareImage(){
     g.font = '700 52px sans-serif'; g.fillStyle = '#fff';
     g.fillText(`「${lastResult.tier.title}」 ${lastResult.time.toFixed(1)}秒`, S/2, S*0.92);
   }
+  if (hitCar){ hitCar.x = hitCarX; hitCar.grp.position.x = hitCarX; hitCar.grp.position.y = groundY(hitCar.z); }
+  if (staged){
+    for (const s of staged){ const n = s.n; n.x = s.x; n.z = s.z; n.photo = s.photo; n.isPhotog = s.isPhotog; n.poseArm = s.poseArm; if (n.phoneMesh) n.phoneMesh.visible = s.phone; n.grp.position.set(s.gx, s.gy, s.gz); n.grp.rotation.y = s.gry; }
+    flashSprite.visible = false;
+  }
+  camera.position.copy(camPos);
+  camera.lookAt(P.x * 0.9, groundY(P.z) + ((G.phase === 'run' || G.phase === 'dead') ? 1.5 : 2.1), P.z - 4);
+  renderer.render(scene, camera);
   return cv;
 }
-$('imgShareBtn').addEventListener('click', ()=>{
-  const shareText = $('shareBtn').href;
+$('shareBtn').addEventListener('click', ()=>{
+  const shareText = shareUrl;
   try {
     const cv = buildShareImage();
     cv.toBlob(async blob => {
@@ -1706,7 +1781,7 @@ $('rankBackBtn').addEventListener('click', toTitle);
 $('nameInput').value = storeGet('izumo_name') || '';
 $('nameInput').addEventListener('change', ()=> storeSet('izumo_name', $('nameInput').value.trim()));
 updateBestLine();
-if (new URLSearchParams(location.search).has('dbg')) window.__G = { G, P, NPCS, SHOPS, boltGrp, CROSS_CARS, TORIIS, PHOTO_SPOTS, formPhotoGroup, player, scene, startGame, startPray, prayTap, punch, showResult, groundY,
+if (new URLSearchParams(location.search).has('dbg')) window.__G = { G, P, NPCS, SHOPS, boltGrp, CROSS_CARS, TORIIS, PHOTO_SPOTS, formPhotoGroup, player, scene, startGame, startPray, prayTap, punch, showResult, groundY, buildShareImage,
   acState: () => AC ? AC.state : 'none', bgmOn: () => !!ambNodes,
   armVec: () => { const p = player.userData.parts; const v = new THREE.Vector3(), s = new THREE.Vector3();
     p.armR.children[1].getWorldPosition(v); p.armR.getWorldPosition(s);
