@@ -1661,6 +1661,25 @@ function buildShareImage(){
     camera.position.set(spot.x - 3.4, gy + 3.4, spot.z + 11.5);
     camera.lookAt(spot.x + 0.3, gy + 1.1, spot.z + 1.6);
     renderer.render(scene, camera);
+  } else if (G.endKind === 'report'){
+    // staged photo: two police officers flank the player for the arrest shot (created for the photo, removed right after)
+    const gy = groundY(P.z);
+    const fx = -Math.sin(P.angle), fz = -Math.cos(P.angle);
+    const rx = -fz, rz = fx; // player's right in xz
+    const cops = [];
+    for (const s of [1, -1]){
+      const cop = makeFigure(0x1f2c56, { hat: 'cap', hatColor: 0x141f3d, pants: 0x182238 });
+      const cx = P.x + rx * 0.95 * s - fx * 0.1, cz = P.z + rz * 0.95 * s - fz * 0.1;
+      cop.position.set(cx, groundY(cz), cz);
+      cop.rotation.y = Math.atan2(-(-rx * s), -(-rz * s)); // face the player
+      const parts = cop.userData.parts;
+      if (s > 0) parts.armL.rotation.x = -1.05; else parts.armR.rotation.x = -1.05; // inner arm toward the player's shoulder
+      scene.add(cop); cops.push(cop);
+    }
+    camera.position.set(P.x + fx * 5.4 + rx * 1.7, gy + 2.5, P.z + fz * 5.4 + rz * 1.7);
+    camera.lookAt(P.x, gy + 1.0, P.z);
+    renderer.render(scene, camera);
+    for (const cop of cops) scene.remove(cop);
   } else {
     let tx = P.x, tz = P.z;
     if (G.endKind === 'car' && G.hitCar){
